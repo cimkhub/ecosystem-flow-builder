@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useCallback, useRef } from 'react';
@@ -124,8 +123,7 @@ export default function LogoUploader() {
           <input
             ref={folderInputRef}
             type="file"
-            webkitdirectory=""
-            directory=""
+            {...({ webkitdirectory: "" } as any)}
             multiple
             onChange={handleFolderSelect}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
