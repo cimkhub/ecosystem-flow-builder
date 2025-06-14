@@ -266,6 +266,52 @@ export default function ChartCustomizationPanel({ isOpen, onClose }: ChartCustom
                     ))}
                   </div>
                 </div>
+
+                {/* Position Customization */}
+                <div>
+                  <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center">
+                    <Move className="h-5 w-5 mr-2" />
+                    Position
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        X Position (px)
+                      </label>
+                      <input
+                        type="number"
+                        value={getCurrentCategoryCustomization(selectedCategory).position.x}
+                        onChange={(e) => handleCategoryCustomization(selectedCategory, {
+                          position: {
+                            ...getCurrentCategoryCustomization(selectedCategory).position,
+                            x: parseInt(e.target.value) || 0
+                          }
+                        })}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        min="-200"
+                        max="200"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Y Position (px)
+                      </label>
+                      <input
+                        type="number"
+                        value={getCurrentCategoryCustomization(selectedCategory).position.y}
+                        onChange={(e) => handleCategoryCustomization(selectedCategory, {
+                          position: {
+                            ...getCurrentCategoryCustomization(selectedCategory).position,
+                            y: parseInt(e.target.value) || 0
+                          }
+                        })}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        min="-200"
+                        max="200"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 

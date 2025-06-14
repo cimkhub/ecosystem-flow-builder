@@ -41,10 +41,47 @@ export default function EcosystemChart() {
 
   const getSizeClasses = (size: 'small' | 'medium' | 'large') => {
     switch (size) {
-      case 'small': return 'col-span-1 max-w-xs';
-      case 'medium': return 'col-span-1 max-w-sm';
-      case 'large': return 'col-span-1 lg:col-span-2 max-w-md';
-      default: return 'col-span-1 max-w-sm';
+      case 'small': return { container: 'col-span-1 max-w-xs', width: 'w-64', height: 'h-48' };
+      case 'medium': return { container: 'col-span-1 max-w-sm', width: 'w-80', height: 'h-56' };
+      case 'large': return { container: 'col-span-1 lg:col-span-2 max-w-md', width: 'w-96', height: 'h-64' };
+      default: return { container: 'col-span-1 max-w-sm', width: 'w-80', height: 'h-56' };
+    }
+  };
+
+  const getDynamicSizes = (size: 'small' | 'medium' | 'large') => {
+    switch (size) {
+      case 'small': return { 
+        titleFont: 'text-lg', 
+        subtitleFont: 'text-xs', 
+        companyFont: 'text-xs', 
+        logoSize: 'max-h-4 max-w-16',
+        padding: 'p-4',
+        spacing: 'space-y-3'
+      };
+      case 'medium': return { 
+        titleFont: 'text-xl', 
+        subtitleFont: 'text-sm', 
+        companyFont: 'text-xs', 
+        logoSize: 'max-h-6 max-w-20',
+        padding: 'p-6',
+        spacing: 'space-y-4'
+      };
+      case 'large': return { 
+        titleFont: 'text-2xl', 
+        subtitleFont: 'text-base', 
+        companyFont: 'text-sm', 
+        logoSize: 'max-h-8 max-w-24',
+        padding: 'p-8',
+        spacing: 'space-y-6'
+      };
+      default: return { 
+        titleFont: 'text-xl', 
+        subtitleFont: 'text-sm', 
+        companyFont: 'text-xs', 
+        logoSize: 'max-h-6 max-w-20',
+        padding: 'p-6',
+        spacing: 'space-y-4'
+      };
     }
   };
 
@@ -99,14 +136,30 @@ export default function EcosystemChart() {
         ref={chartRef}
         className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
       >
-        {/* Chart Header with Title and Subtitle */}
-        <div className="text-center py-8 px-8 bg-gradient-to-r from-slate-50 to-gray-100 border-b">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            {chartCustomization.title}
-          </h1>
-          <p className="text-xl text-gray-600">
-            {chartCustomization.subtitle}
-          </p>
+        {/* Modern Silicon Valley Style Chart Header */}
+        <div className="relative text-center py-16 px-8 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-hidden">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 via-blue-600/10 to-cyan-600/10"></div>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(120,119,198,0.3),transparent_50%)]"></div>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(120,200,255,0.2),transparent_50%)]"></div>
+          
+          {/* Floating Elements */}
+          <div className="absolute top-8 left-8 w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
+          <div className="absolute top-12 right-12 w-1 h-1 bg-purple-400 rounded-full animate-bounce"></div>
+          <div className="absolute bottom-8 left-16 w-1.5 h-1.5 bg-blue-400 rounded-full animate-ping"></div>
+          
+          <div className="relative z-10">
+            <h1 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-100 to-purple-200 mb-4 tracking-tight leading-tight">
+              {chartCustomization.title}
+            </h1>
+            <div className="w-24 h-1 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 mx-auto mb-6 rounded-full"></div>
+            <p className="text-2xl text-gray-300 font-light tracking-wide max-w-2xl mx-auto leading-relaxed">
+              {chartCustomization.subtitle}
+            </p>
+          </div>
+          
+          {/* Bottom Gradient Line */}
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent"></div>
         </div>
 
         {/* Chart Content */}
@@ -120,29 +173,33 @@ export default function EcosystemChart() {
               position: { x: 0, y: 0 }
             };
             
+            const sizeClasses = getSizeClasses(customization.size);
+            const dynamicSizes = getDynamicSizes(customization.size);
+            
             return (
               <div
                 key={category.name}
-                className={`group relative rounded-2xl p-6 shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in ${getSizeClasses(customization.size)}`}
+                className={`group relative rounded-2xl shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in ${sizeClasses.container} ${sizeClasses.width} ${sizeClasses.height}`}
                 style={{ 
                   backgroundColor: customization.backgroundColor,
                   borderColor: customization.borderColor,
                   borderWidth: '2px',
                   borderStyle: 'solid',
-                  animationDelay: `${categoryIndex * 150}ms`
+                  animationDelay: `${categoryIndex * 150}ms`,
+                  transform: `translate(${customization.position.x}px, ${customization.position.y}px)`
                 }}
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-2xl" />
                 
-                <div className="relative">
+                <div className={`relative h-full flex flex-col ${dynamicSizes.padding}`}>
                   <h3
-                    className="text-xl font-bold mb-6 text-center"
+                    className={`${dynamicSizes.titleFont} font-bold mb-4 text-center`}
                     style={{ color: customization.textColor }}
                   >
                     {category.name}
                   </h3>
                   
-                  <div className="space-y-6">
+                  <div className={`flex-1 overflow-y-auto ${dynamicSizes.spacing}`}>
                     {category.subcategories?.map((subcategory, subcategoryIndex) => (
                       <div
                         key={subcategory.name}
@@ -150,35 +207,35 @@ export default function EcosystemChart() {
                         style={{ animationDelay: `${(categoryIndex * 150) + (subcategoryIndex * 100)}ms` }}
                       >
                         <h4
-                          className="text-sm font-semibold mb-3 text-center uppercase tracking-wide"
+                          className={`${dynamicSizes.subtitleFont} font-semibold mb-3 text-center uppercase tracking-wide`}
                           style={{ color: customization.textColor, opacity: 0.8 }}
                         >
                           {subcategory.name}
                         </h4>
                         
-                        <div className="grid grid-cols-1 gap-3">
+                        <div className="grid grid-cols-1 gap-2">
                           {subcategory.companies.map((company, companyIndex) => (
                             <div
                               key={company.id}
-                              className="bg-white/95 backdrop-blur-sm rounded-xl p-3 flex flex-col items-center text-center transform transition-all duration-200 hover:scale-105 hover:bg-white animate-fade-in"
+                              className="bg-white/95 backdrop-blur-sm rounded-xl p-2 flex flex-col items-center text-center transform transition-all duration-200 hover:scale-105 hover:bg-white animate-fade-in"
                               style={{ animationDelay: `${(categoryIndex * 150) + (subcategoryIndex * 100) + (companyIndex * 50)}ms` }}
                             >
                               {company.logoUrl ? (
-                                <div className="mb-2 p-2 bg-white rounded-lg shadow-sm">
+                                <div className="mb-1 p-1 bg-white rounded-lg shadow-sm">
                                   <img
                                     src={company.logoUrl}
                                     alt={company.company_name}
-                                    className="max-h-6 max-w-full object-contain"
+                                    className={`${dynamicSizes.logoSize} object-contain`}
                                   />
                                 </div>
                               ) : (
-                                <div className="mb-2 w-6 h-6 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center">
-                                  <span className="text-xs font-semibold text-gray-600">
+                                <div className={`mb-1 ${customization.size === 'small' ? 'w-4 h-4' : customization.size === 'large' ? 'w-8 h-8' : 'w-6 h-6'} bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center`}>
+                                  <span className={`${customization.size === 'small' ? 'text-xs' : customization.size === 'large' ? 'text-sm' : 'text-xs'} font-semibold text-gray-600`}>
                                     {company.company_name.charAt(0)}
                                   </span>
                                 </div>
                               )}
-                              <span className="text-xs font-medium text-gray-800">
+                              <span className={`${dynamicSizes.companyFont} font-medium text-gray-800`}>
                                 {company.company_name}
                               </span>
                             </div>
