@@ -1,11 +1,10 @@
-
 'use client';
 
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, AlertCircle } from 'lucide-react';
-import { useEcosystemStore } from '@/lib/useEcosystemStore';
-import { csvToJson, validateJsonData } from '@/lib/csvToJson';
+import { useEcosystemStore } from '../lib/useEcosystemStore';
+import { csvToJson, validateJsonData } from '../lib/csvToJson';
 
 export default function FileUploader() {
   const { setCompanies, setUploadErrors, uploadErrors } = useEcosystemStore();

@@ -1,11 +1,10 @@
-
 'use client';
 
 import React, { useRef } from 'react';
 import { Download } from 'lucide-react';
 import html2canvas from 'html2canvas';
-import { useEcosystemStore } from '@/lib/useEcosystemStore';
-import { getContrastColor } from '@/lib/colorFromString';
+import { useEcosystemStore } from '../lib/useEcosystemStore';
+import { getContrastColor } from '../lib/colorFromString';
 
 export default function EcosystemChart() {
   const { categories } = useEcosystemStore();

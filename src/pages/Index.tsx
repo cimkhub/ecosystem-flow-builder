@@ -1,12 +1,11 @@
-
 'use client';
 
 import React, { useState } from 'react';
 import { Building2, Upload, Image } from 'lucide-react';
-import FileUploader from '@/components/FileUploader';
-import LogoUploader from '@/components/LogoUploader';
-import EcosystemChart from '@/components/EcosystemChart';
-import { useEcosystemStore } from '@/lib/useEcosystemStore';
+import FileUploader from '../components/FileUploader';
+import LogoUploader from '../components/LogoUploader';
+import EcosystemChart from '../components/EcosystemChart';
+import { useEcosystemStore } from '../lib/useEcosystemStore';
 
 export default function Index() {
   const [activeTab, setActiveTab] = useState<'data' | 'logos' | 'chart'>('data');

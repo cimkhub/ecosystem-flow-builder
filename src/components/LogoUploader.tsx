@@ -1,10 +1,9 @@
-
 'use client';
 
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Image, X, Upload } from 'lucide-react';
-import { useEcosystemStore } from '@/lib/useEcosystemStore';
+import { useEcosystemStore } from '../lib/useEcosystemStore';
 
 export default function LogoUploader() {
   const { logos, addLogo, removeLogo, companies } = useEcosystemStore();
