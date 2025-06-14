@@ -77,12 +77,19 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
 
   generateCategories: () => {
     const { companies, logos } = get();
-    const categoryMap = new Map<string, Company[]>();
+    const categoryMap = new Map<string, Map<string, Company[]>>();
 
-    // Group companies by category
+    // Group companies by main category and subcategory
     companies.forEach(company => {
       if (!categoryMap.has(company.category)) {
-        categoryMap.set(company.category, []);
+        categoryMap.set(company.category, new Map());
+      }
+
+      const subcategoryMap = categoryMap.get(company.category)!;
+      const subcategory = company.subcategory || 'Other';
+      
+      if (!subcategoryMap.has(subcategory)) {
+        subcategoryMap.set(subcategory, []);
       }
 
       // Check if we have a logo for this company
@@ -95,16 +102,34 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
         logoUrl: logoFile ? URL.createObjectURL(logoFile) : undefined,
       };
 
-      categoryMap.get(company.category)!.push(companyWithLogo);
+      subcategoryMap.get(subcategory)!.push(companyWithLogo);
     });
 
-    // Convert to Category objects and sort companies alphabetically
+    // Convert to Category objects with subcategories
     const categories: Category[] = Array.from(categoryMap.entries())
-      .map(([name, companies]) => ({
-        name,
-        companies: companies.sort((a, b) => a.company_name.localeCompare(b.company_name)),
-        color: colorFromString(name),
-      }))
+      .map(([name, subcategoryMap]) => {
+        // Flatten all companies from all subcategories for the main category
+        const allCompanies: Company[] = [];
+        const subcategories: { name: string; companies: Company[] }[] = [];
+
+        Array.from(subcategoryMap.entries())
+          .sort(([a], [b]) => a.localeCompare(b))
+          .forEach(([subcategoryName, companies]) => {
+            const sortedCompanies = companies.sort((a, b) => a.company_name.localeCompare(b.company_name));
+            subcategories.push({
+              name: subcategoryName,
+              companies: sortedCompanies
+            });
+            allCompanies.push(...sortedCompanies);
+          });
+
+        return {
+          name,
+          companies: allCompanies,
+          subcategories,
+          color: colorFromString(name),
+        };
+      })
       .sort((a, b) => a.name.localeCompare(b.name));
 
     set({ categories });

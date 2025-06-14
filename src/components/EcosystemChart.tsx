@@ -106,31 +106,48 @@ export default function EcosystemChart() {
                   {category.name}
                 </h3>
                 
-                <div className="grid grid-cols-1 gap-4">
-                  {category.companies.map((company, companyIndex) => (
+                <div className="space-y-6">
+                  {category.subcategories?.map((subcategory, subcategoryIndex) => (
                     <div
-                      key={company.id}
-                      className="bg-white/95 backdrop-blur-sm rounded-xl p-4 flex flex-col items-center text-center transform transition-all duration-200 hover:scale-105 hover:bg-white animate-fade-in"
-                      style={{ animationDelay: `${(categoryIndex * 150) + (companyIndex * 100)}ms` }}
+                      key={subcategory.name}
+                      className="animate-fade-in"
+                      style={{ animationDelay: `${(categoryIndex * 150) + (subcategoryIndex * 100)}ms` }}
                     >
-                      {company.logoUrl ? (
-                        <div className="mb-3 p-2 bg-white rounded-lg shadow-sm">
-                          <img
-                            src={company.logoUrl}
-                            alt={company.company_name}
-                            className="max-h-8 max-w-full object-contain"
-                          />
-                        </div>
-                      ) : (
-                        <div className="mb-3 w-8 h-8 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center">
-                          <span className="text-xs font-semibold text-gray-600">
-                            {company.company_name.charAt(0)}
-                          </span>
-                        </div>
-                      )}
-                      <span className="text-sm font-medium text-gray-800">
-                        {company.company_name}
-                      </span>
+                      <h4
+                        className="text-sm font-semibold mb-3 text-center uppercase tracking-wide"
+                        style={{ color: textColor, opacity: 0.8 }}
+                      >
+                        {subcategory.name}
+                      </h4>
+                      
+                      <div className="grid grid-cols-1 gap-3">
+                        {subcategory.companies.map((company, companyIndex) => (
+                          <div
+                            key={company.id}
+                            className="bg-white/95 backdrop-blur-sm rounded-xl p-3 flex flex-col items-center text-center transform transition-all duration-200 hover:scale-105 hover:bg-white animate-fade-in"
+                            style={{ animationDelay: `${(categoryIndex * 150) + (subcategoryIndex * 100) + (companyIndex * 50)}ms` }}
+                          >
+                            {company.logoUrl ? (
+                              <div className="mb-2 p-2 bg-white rounded-lg shadow-sm">
+                                <img
+                                  src={company.logoUrl}
+                                  alt={company.company_name}
+                                  className="max-h-6 max-w-full object-contain"
+                                />
+                              </div>
+                            ) : (
+                              <div className="mb-2 w-6 h-6 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center">
+                                <span className="text-xs font-semibold text-gray-600">
+                                  {company.company_name.charAt(0)}
+                                </span>
+                              </div>
+                            )}
+                            <span className="text-xs font-medium text-gray-800">
+                              {company.company_name}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>

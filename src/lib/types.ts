@@ -11,6 +11,7 @@ export interface Company {
 export interface Category {
   name: string;
   companies: Company[];
+  subcategories?: { name: string; companies: Company[] }[];
   color: string;
 }
 
