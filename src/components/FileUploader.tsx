@@ -186,7 +186,7 @@ export default function FileUploader() {
               <span className="text-sm text-gray-600">Array of objects</span>
             </div>
             <code className="text-xs text-gray-700 bg-gray-50 p-2 rounded block">
-              [{"company_name": "...", "category": "..."}]
+              {"[{\"company_name\": \"...\", \"category\": \"...\"}]"}
             </code>
           </div>
         </div>
