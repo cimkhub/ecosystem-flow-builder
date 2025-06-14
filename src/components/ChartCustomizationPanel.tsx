@@ -2,9 +2,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Palette, Type, Move, Maximize2, Settings2, X } from 'lucide-react';
+import { Palette, Type, Move, Maximize2, Settings2, X, Save } from 'lucide-react';
 import { useEcosystemStore } from '../lib/useEcosystemStore';
 import { CategoryCustomization } from '../lib/types';
+import { getContrastColor } from '../lib/colorFromString';
 
 interface ChartCustomizationPanelProps {
   isOpen: boolean;
@@ -37,6 +38,22 @@ export default function ChartCustomizationPanel({ isOpen, onClose }: ChartCustom
 
   const handleCategoryCustomization = (categoryName: string, updates: Partial<CategoryCustomization>) => {
     updateCategoryCustomization(categoryName, updates);
+  };
+
+  const handleSave = () => {
+    // The changes are already saved in real-time via the store
+    // This button provides user feedback that changes are saved
+    onClose();
+  };
+
+  const getCurrentCategoryCustomization = (categoryName: string) => {
+    return chartCustomization.categories[categoryName] || {
+      backgroundColor: categories.find(c => c.name === categoryName)?.color || '#3B82F6',
+      borderColor: categories.find(c => c.name === categoryName)?.color || '#3B82F6',
+      textColor: getContrastColor(categories.find(c => c.name === categoryName)?.color || '#3B82F6'),
+      size: 'medium' as const,
+      position: { x: 0, y: 0 }
+    };
   };
 
   return (
@@ -112,7 +129,7 @@ export default function ChartCustomizationPanel({ isOpen, onClose }: ChartCustom
                         <div className="flex items-center space-x-2">
                           <div
                             className="w-3 h-3 rounded"
-                            style={{ backgroundColor: category.color }}
+                            style={{ backgroundColor: getCurrentCategoryCustomization(category.name).backgroundColor }}
                           />
                           <span className="text-sm font-medium truncate">
                             {category.name}
@@ -189,7 +206,8 @@ export default function ChartCustomizationPanel({ isOpen, onClose }: ChartCustom
                           <button
                             key={color}
                             onClick={() => handleCategoryCustomization(selectedCategory, { 
-                              backgroundColor: color 
+                              backgroundColor: color,
+                              textColor: getContrastColor(color)
                             })}
                             className="w-8 h-8 rounded-lg border-2 border-white shadow-md hover:scale-110 transition-transform"
                             style={{ backgroundColor: color }}
@@ -198,9 +216,10 @@ export default function ChartCustomizationPanel({ isOpen, onClose }: ChartCustom
                       </div>
                       <input
                         type="color"
-                        value={categories.find(c => c.name === selectedCategory)?.customization?.backgroundColor || '#3B82F6'}
+                        value={getCurrentCategoryCustomization(selectedCategory).backgroundColor}
                         onChange={(e) => handleCategoryCustomization(selectedCategory, { 
-                          backgroundColor: e.target.value 
+                          backgroundColor: e.target.value,
+                          textColor: getContrastColor(e.target.value)
                         })}
                         className="w-full h-12 border border-gray-300 rounded-xl cursor-pointer"
                       />
@@ -212,7 +231,7 @@ export default function ChartCustomizationPanel({ isOpen, onClose }: ChartCustom
                       </label>
                       <input
                         type="color"
-                        value={categories.find(c => c.name === selectedCategory)?.customization?.borderColor || '#3B82F6'}
+                        value={getCurrentCategoryCustomization(selectedCategory).borderColor}
                         onChange={(e) => handleCategoryCustomization(selectedCategory, { 
                           borderColor: e.target.value 
                         })}
@@ -236,7 +255,7 @@ export default function ChartCustomizationPanel({ isOpen, onClose }: ChartCustom
                           size: option.value as 'small' | 'medium' | 'large'
                         })}
                         className={`p-4 border-2 rounded-xl transition-all ${
-                          categories.find(c => c.name === selectedCategory)?.customization?.size === option.value
+                          getCurrentCategoryCustomization(selectedCategory).size === option.value
                             ? 'border-blue-500 bg-blue-50'
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
@@ -274,6 +293,13 @@ export default function ChartCustomizationPanel({ isOpen, onClose }: ChartCustom
               className="px-6 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors"
             >
               Close
+            </button>
+            <button
+              onClick={handleSave}
+              className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-2 rounded-xl transition-all duration-200 hover:scale-105 shadow-lg"
+            >
+              <Save className="h-4 w-4" />
+              <span>Save Changes</span>
             </button>
           </div>
         </div>

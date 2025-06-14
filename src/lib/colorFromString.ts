@@ -17,6 +17,16 @@ export function colorFromString(str: string): string {
 }
 
 export function getContrastColor(backgroundColor: string): string {
+  // Handle hex colors
+  if (backgroundColor.startsWith('#')) {
+    const hex = backgroundColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness > 155 ? '#1f2937' : '#ffffff';
+  }
+  
   // Extract HSL values to determine if we need light or dark text
   const hslMatch = backgroundColor.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
   if (hslMatch) {

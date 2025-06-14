@@ -41,10 +41,10 @@ export default function EcosystemChart() {
 
   const getSizeClasses = (size: 'small' | 'medium' | 'large') => {
     switch (size) {
-      case 'small': return 'col-span-1';
-      case 'medium': return 'md:col-span-1 lg:col-span-1';
-      case 'large': return 'md:col-span-2 lg:col-span-1';
-      default: return 'md:col-span-1 lg:col-span-1';
+      case 'small': return 'col-span-1 max-w-xs';
+      case 'medium': return 'col-span-1 max-w-sm';
+      case 'large': return 'col-span-1 lg:col-span-2 max-w-md';
+      default: return 'col-span-1 max-w-sm';
     }
   };
 
@@ -112,7 +112,7 @@ export default function EcosystemChart() {
         {/* Chart Content */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-8">
           {categories.map((category, categoryIndex) => {
-            const customization = category.customization || {
+            const customization = chartCustomization.categories[category.name] || {
               backgroundColor: category.color,
               borderColor: category.color,
               textColor: getContrastColor(category.color),
