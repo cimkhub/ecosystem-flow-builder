@@ -1,8 +1,9 @@
+
 'use client';
 
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Image, X, Upload } from 'lucide-react';
+import { Image, X, Upload, Sparkles, CheckCircle2 } from 'lucide-react';
 import { useEcosystemStore } from '../lib/useEcosystemStore';
 
 export default function LogoUploader() {
@@ -38,46 +39,90 @@ export default function LogoUploader() {
   const logoArray = Array.from(logos.entries());
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
       <div
         {...getRootProps()}
         className={`
-          border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors
-          ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
+          relative group border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all duration-300 overflow-hidden
+          ${isDragActive 
+            ? 'border-purple-400 bg-gradient-to-br from-purple-50 to-pink-50 scale-105' 
+            : 'border-gray-200 hover:border-purple-300 hover:bg-gradient-to-br hover:from-purple-50/50 hover:to-pink-50/50 hover:scale-102'
+          }
         `}
       >
         <input {...getInputProps()} />
-        <div className="flex flex-col items-center space-y-3">
-          <Upload className="h-8 w-8 text-gray-400" />
-          <div>
-            <p className="font-medium">
+        
+        {/* Animated background */}
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-600/5 to-pink-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        
+        <div className="relative flex flex-col items-center space-y-6">
+          <div className="relative">
+            <div className={`
+              h-16 w-16 rounded-2xl flex items-center justify-center transition-all duration-300 group-hover:scale-110
+              ${isDragActive 
+                ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white' 
+                : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 group-hover:from-purple-100 group-hover:to-pink-100 group-hover:text-purple-600'
+              }
+            `}>
+              <Image className="h-8 w-8" />
+            </div>
+            
+            {/* Floating particles */}
+            <div className="absolute -top-2 -right-2 w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
+            <div className="absolute -bottom-2 -left-2 w-2 h-2 bg-pink-400 rounded-full animate-bounce" style={{ animationDelay: '0.5s' }} />
+          </div>
+          
+          <div className="space-y-2">
+            <h3 className={`text-xl font-semibold transition-colors duration-300 ${
+              isDragActive ? 'text-purple-700' : 'text-gray-800'
+            }`}>
               {isDragActive ? 'Drop logos here' : 'Upload company logos'}
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
+            </h3>
+            
+            <p className={`text-sm transition-colors duration-300 ${
+              isDragActive ? 'text-purple-600' : 'text-gray-500'
+            }`}>
               PNG, JPG, SVG files. Name files to match company names.
             </p>
+          </div>
+
+          {/* File format badges */}
+          <div className="flex space-x-3">
+            <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">PNG</span>
+            <span className="px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs font-medium">JPG</span>
+            <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">SVG</span>
           </div>
         </div>
       </div>
 
       {logoArray.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {logoArray.map(([filename, file]) => (
-            <div key={filename} className="relative group">
-              <div className="bg-white border rounded-lg p-2 hover:shadow-md transition-shadow">
-                <div className="aspect-square bg-gray-50 rounded flex items-center justify-center mb-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          {logoArray.map(([filename, file], index) => (
+            <div 
+              key={filename} 
+              className="relative group animate-fade-in"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <div className="bg-white border-2 border-gray-100 rounded-xl p-4 hover:shadow-lg hover:border-purple-200 transition-all duration-300 hover:scale-105">
+                <div className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center mb-3 overflow-hidden">
                   <img
                     src={URL.createObjectURL(file)}
                     alt={filename}
                     className="max-w-full max-h-full object-contain"
                   />
                 </div>
-                <p className="text-xs text-gray-600 truncate" title={filename}>
+                <p className="text-xs text-gray-600 truncate font-medium" title={filename}>
                   {filename}
                 </p>
+                
+                {/* Success indicator */}
+                <div className="absolute top-2 left-2 bg-green-100 text-green-600 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <CheckCircle2 className="h-3 w-3" />
+                </div>
+                
                 <button
                   onClick={() => removeLogo(filename)}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -88,13 +133,25 @@ export default function LogoUploader() {
       )}
 
       {companies.length > 0 && (
-        <div className="bg-blue-50 rounded-lg p-3 text-sm">
-          <h3 className="font-medium text-blue-800 mb-1">Logo Matching Tips:</h3>
-          <ul className="text-blue-700 space-y-1 text-xs">
-            <li>• Name image files to match company names exactly</li>
-            <li>• Or use the logo_filename specified in your data</li>
-            <li>• Supported formats: PNG, JPG, SVG</li>
-          </ul>
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
+          <h3 className="font-semibold text-purple-800 mb-3 flex items-center space-x-2">
+            <Sparkles className="h-5 w-5" />
+            <span>Logo Matching Tips</span>
+          </h3>
+          <div className="grid md:grid-cols-3 gap-4 text-sm">
+            <div className="bg-white rounded-lg p-3 border border-purple-200">
+              <div className="font-medium text-purple-700 mb-1">File Naming</div>
+              <div className="text-purple-600 text-xs">Name files to match company names exactly</div>
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-purple-200">
+              <div className="font-medium text-purple-700 mb-1">Auto-matching</div>
+              <div className="text-purple-600 text-xs">Use logo_filename from your data</div>
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-purple-200">
+              <div className="font-medium text-purple-700 mb-1">Formats</div>
+              <div className="text-purple-600 text-xs">PNG, JPG, SVG supported</div>
+            </div>
+          </div>
         </div>
       )}
     </div>
