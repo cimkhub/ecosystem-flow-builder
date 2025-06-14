@@ -1,6 +1,6 @@
 
 import { create } from 'zustand';
-import { EcosystemState, Company, Category } from './types';
+import { EcosystemState, Company, Category, RawDataRow, ColumnMapping } from './types';
 import { colorFromString } from './colorFromString';
 
 export const useEcosystemStore = create<EcosystemState>((set, get) => ({
@@ -8,6 +8,9 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
   logos: new Map(),
   categories: [],
   uploadErrors: [],
+  rawData: [],
+  csvColumns: [],
+  showColumnMapper: false,
 
   setCompanies: (companies: Company[]) => {
     set({ companies });
@@ -32,6 +35,37 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
 
   setUploadErrors: (errors: string[]) => {
     set({ uploadErrors: errors });
+  },
+
+  setRawData: (data: RawDataRow[], columns: string[]) => {
+    set({ rawData: data, csvColumns: columns, showColumnMapper: true });
+  },
+
+  setShowColumnMapper: (show: boolean) => {
+    set({ showColumnMapper: show });
+  },
+
+  mapColumnsAndCreateCompanies: (mapping: ColumnMapping) => {
+    const { rawData } = get();
+    const companies: Company[] = [];
+
+    rawData.forEach((row, index) => {
+      const companyName = row[mapping.company_name]?.trim();
+      const category = row[mapping.category]?.trim();
+      
+      if (companyName && category) {
+        companies.push({
+          id: `${companyName}-${category}-${index}`,
+          company_name: companyName,
+          category: category,
+          subcategory: mapping.subcategory ? row[mapping.subcategory]?.trim() : undefined,
+          logo_filename: mapping.logo_filename ? row[mapping.logo_filename]?.trim() : undefined,
+        });
+      }
+    });
+
+    set({ companies });
+    get().generateCategories();
   },
 
   generateCategories: () => {

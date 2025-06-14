@@ -5,10 +5,11 @@ import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, AlertCircle, Sparkles, CheckCircle2 } from 'lucide-react';
 import { useEcosystemStore } from '../lib/useEcosystemStore';
-import { csvToJson, validateJsonData } from '../lib/csvToJson';
+import { parseCsvForMapping } from '../lib/csvToJson';
+import ColumnMapper from './ColumnMapper';
 
 export default function FileUploader() {
-  const { setCompanies, setUploadErrors, uploadErrors } = useEcosystemStore();
+  const { setUploadErrors, uploadErrors, showColumnMapper, setRawData } = useEcosystemStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
 
@@ -24,21 +25,24 @@ export default function FileUploader() {
       const content = await file.text();
       
       if (file.name.endsWith('.csv')) {
-        const { companies, errors } = csvToJson(content);
+        const { data, columns, errors } = parseCsvForMapping(content);
         if (errors.length > 0) {
           setUploadErrors(errors);
         } else {
-          setCompanies(companies);
+          setRawData(data, columns);
           setUploadSuccess(true);
           setTimeout(() => setUploadSuccess(false), 3000);
         }
       } else if (file.name.endsWith('.json')) {
-        const data = JSON.parse(content);
-        const { companies, errors } = validateJsonData(data);
-        if (errors.length > 0) {
-          setUploadErrors(errors);
+        const jsonData = JSON.parse(content);
+        if (!Array.isArray(jsonData)) {
+          setUploadErrors(['JSON data must be an array of objects']);
+        } else if (jsonData.length === 0) {
+          setUploadErrors(['JSON array is empty']);
         } else {
-          setCompanies(companies);
+          // Convert JSON to raw data format
+          const columns = Object.keys(jsonData[0] || {});
+          setRawData(jsonData, columns);
           setUploadSuccess(true);
           setTimeout(() => setUploadSuccess(false), 3000);
         }
@@ -48,7 +52,7 @@ export default function FileUploader() {
     } finally {
       setIsProcessing(false);
     }
-  }, [setCompanies, setUploadErrors]);
+  }, [setUploadErrors, setRawData]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -58,6 +62,10 @@ export default function FileUploader() {
     },
     maxFiles: 1,
   });
+
+  if (showColumnMapper) {
+    return <ColumnMapper />;
+  }
 
   return (
     <div className="space-y-8">
@@ -117,7 +125,7 @@ export default function FileUploader() {
               {isDragActive 
                 ? 'Drop your file here' 
                 : uploadSuccess 
-                ? 'Upload successful!'
+                ? 'Upload successful! Ready to map columns'
                 : isProcessing 
                 ? 'Processing your data...' 
                 : 'Upload company data'
@@ -128,7 +136,7 @@ export default function FileUploader() {
               isDragActive ? 'text-blue-600' : uploadSuccess ? 'text-green-600' : 'text-gray-500'
             }`}>
               {uploadSuccess 
-                ? 'Your data has been imported successfully'
+                ? 'Next: Map your columns to create the ecosystem'
                 : 'Drag and drop a CSV or JSON file, or click to browse'
               }
             </p>
@@ -173,20 +181,20 @@ export default function FileUploader() {
           <div className="bg-white rounded-lg p-4 border border-blue-200">
             <div className="flex items-center space-x-2 mb-2">
               <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded font-mono text-xs font-semibold">CSV</span>
-              <span className="text-sm text-gray-600">Comma-separated values</span>
+              <span className="text-sm text-gray-600">Any column structure</span>
             </div>
             <code className="text-xs text-gray-700 bg-gray-50 p-2 rounded block">
-              company_name, category, logo_filename
+              company, type, logo, sector
             </code>
           </div>
           
           <div className="bg-white rounded-lg p-4 border border-purple-200">
             <div className="flex items-center space-x-2 mb-2">
               <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded font-mono text-xs font-semibold">JSON</span>
-              <span className="text-sm text-gray-600">Array of objects</span>
+              <span className="text-sm text-gray-600">Any object structure</span>
             </div>
             <code className="text-xs text-gray-700 bg-gray-50 p-2 rounded block">
-              {"[{\"company_name\": \"...\", \"category\": \"...\"}]"}
+              {"[{\"name\": \"...\", \"type\": \"...\"}]"}
             </code>
           </div>
         </div>
