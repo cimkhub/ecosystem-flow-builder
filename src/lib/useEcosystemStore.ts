@@ -1,6 +1,7 @@
+
 import { create } from 'zustand';
-import { EcosystemState, Company, Category, RawDataRow, ColumnMapping } from './types';
-import { colorFromString } from './colorFromString';
+import { EcosystemState, Company, Category, RawDataRow, ColumnMapping, ChartCustomization, CategoryCustomization } from './types';
+import { colorFromString, getContrastColor } from './colorFromString';
 
 export const useEcosystemStore = create<EcosystemState>((set, get) => ({
   companies: [],
@@ -10,6 +11,11 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
   rawData: [],
   csvColumns: [],
   showColumnMapper: false,
+  chartCustomization: {
+    title: 'AI Ecosystem Map',
+    subtitle: 'Market Landscape Overview',
+    categories: {}
+  },
 
   setCompanies: (companies: Company[]) => {
     set({ companies });
@@ -44,6 +50,40 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
     set({ showColumnMapper: show });
   },
 
+  updateChartCustomization: (customization: Partial<ChartCustomization>) => {
+    const { chartCustomization } = get();
+    set({ 
+      chartCustomization: { 
+        ...chartCustomization, 
+        ...customization 
+      } 
+    });
+  },
+
+  updateCategoryCustomization: (categoryName: string, customization: Partial<CategoryCustomization>) => {
+    const { chartCustomization } = get();
+    const currentCategoryCustomization = chartCustomization.categories[categoryName] || {
+      backgroundColor: colorFromString(categoryName),
+      borderColor: colorFromString(categoryName),
+      textColor: getContrastColor(colorFromString(categoryName)),
+      size: 'medium' as const,
+      position: { x: 0, y: 0 }
+    };
+
+    set({
+      chartCustomization: {
+        ...chartCustomization,
+        categories: {
+          ...chartCustomization.categories,
+          [categoryName]: {
+            ...currentCategoryCustomization,
+            ...customization
+          }
+        }
+      }
+    });
+  },
+
   mapColumnsAndCreateCompanies: (mapping: ColumnMapping) => {
     const { rawData } = get();
     const companies: Company[] = [];
@@ -54,7 +94,6 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
       const category = row[mapping.category]?.trim();
       
       if (!companyName || !category) {
-        // Skip rows with missing required data, but don't show errors since this is expected
         return;
       }
 
@@ -76,10 +115,9 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
   },
 
   generateCategories: () => {
-    const { companies, logos } = get();
+    const { companies, logos, chartCustomization } = get();
     const categoryMap = new Map<string, Map<string, Company[]>>();
 
-    // Group companies by main category and subcategory
     companies.forEach(company => {
       if (!categoryMap.has(company.category)) {
         categoryMap.set(company.category, new Map());
@@ -92,7 +130,6 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
         subcategoryMap.set(subcategory, []);
       }
 
-      // Check if we have a logo for this company
       const logoFile = logos.get(company.logo_filename || '') || 
                       logos.get(company.company_name.toLowerCase()) ||
                       logos.get(company.company_name);
@@ -105,10 +142,8 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
       subcategoryMap.get(subcategory)!.push(companyWithLogo);
     });
 
-    // Convert to Category objects with subcategories
     const categories: Category[] = Array.from(categoryMap.entries())
       .map(([name, subcategoryMap]) => {
-        // Flatten all companies from all subcategories for the main category
         const allCompanies: Company[] = [];
         const subcategories: { name: string; companies: Company[] }[] = [];
 
@@ -123,11 +158,21 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
             allCompanies.push(...sortedCompanies);
           });
 
+        const customization = chartCustomization.categories[name];
+        const defaultColor = colorFromString(name);
+
         return {
           name,
           companies: allCompanies,
           subcategories,
-          color: colorFromString(name),
+          color: customization?.backgroundColor || defaultColor,
+          customization: customization || {
+            backgroundColor: defaultColor,
+            borderColor: defaultColor,
+            textColor: getContrastColor(defaultColor),
+            size: 'medium' as const,
+            position: { x: 0, y: 0 }
+          }
         };
       })
       .sort((a, b) => a.name.localeCompare(b.name));

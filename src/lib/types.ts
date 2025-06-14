@@ -8,11 +8,26 @@ export interface Company {
   logoUrl?: string;
 }
 
+export interface CategoryCustomization {
+  backgroundColor: string;
+  borderColor: string;
+  textColor: string;
+  size: 'small' | 'medium' | 'large';
+  position: { x: number; y: number };
+}
+
+export interface ChartCustomization {
+  title: string;
+  subtitle: string;
+  categories: Record<string, CategoryCustomization>;
+}
+
 export interface Category {
   name: string;
   companies: Company[];
   subcategories?: { name: string; companies: Company[] }[];
   color: string;
+  customization?: CategoryCustomization;
 }
 
 export interface ColumnMapping {
@@ -34,6 +49,7 @@ export interface EcosystemState {
   rawData: RawDataRow[];
   csvColumns: string[];
   showColumnMapper: boolean;
+  chartCustomization: ChartCustomization;
   setCompanies: (companies: Company[]) => void;
   addLogo: (filename: string, file: File) => void;
   removeLogo: (filename: string) => void;
@@ -42,4 +58,6 @@ export interface EcosystemState {
   setRawData: (data: RawDataRow[], columns: string[]) => void;
   setShowColumnMapper: (show: boolean) => void;
   mapColumnsAndCreateCompanies: (mapping: ColumnMapping) => void;
+  updateChartCustomization: (customization: Partial<ChartCustomization>) => void;
+  updateCategoryCustomization: (categoryName: string, customization: Partial<CategoryCustomization>) => void;
 }
