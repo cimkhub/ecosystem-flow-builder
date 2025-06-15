@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { EcosystemState, Company, Category, RawDataRow, ColumnMapping, ChartCustomization, CategoryCustomization } from './types';
 import { colorFromString, getContrastColor } from './colorFromString';
@@ -235,34 +234,21 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
       const categoryCount = categories.length;
 
       if (chartCustomization.layoutOrientation === 'landscape') {
-        // LANDSCAPE LAYOUT
-        let rows = 2;
-        if (categoryCount <= 3) rows = 1;
-        else if (categoryCount <= 8) rows = 2;
-        else rows = 3;
+        // NEW PPT-style LANDSCAPE LAYOUT
+        let cols = 4;
+        if (categoryCount <= 3) cols = categoryCount;
+        else if (categoryCount <= 8) cols = 4;
+        else if (categoryCount <= 12) cols = 4;
+        else cols = 5;
 
-        const cols = Math.ceil(categoryCount / rows);
+        const rows = Math.ceil(categoryCount / cols);
         
         const rowHeights: number[] = [];
         for (let i = 0; i < rows; i++) {
-            const indicesInRow = [];
-            for (let j = 0; j < cols; j++) {
-                const index = i + j * rows;
-                if (index < categoryCount) {
-                    indicesInRow.push(index);
-                }
+            const rowSlice = categoryHeights.slice(i * cols, (i * cols) + cols);
+            if (rowSlice.length > 0) {
+              rowHeights.push(Math.max(...rowSlice));
             }
-            if (indicesInRow.length > 0) {
-                const maxRowHeight = Math.max(...indicesInRow.map(k => categoryHeights[k]));
-                rowHeights.push(maxRowHeight);
-            } else {
-                rowHeights.push(0);
-            }
-        }
-
-        const colXOffsets = [CANVAS_PADDING];
-        for (let i = 0; i < cols - 1; i++) {
-          colXOffsets.push(colXOffsets[i] + CATEGORY_WIDTH + HORIZONTAL_GAP);
         }
         
         const rowYOffsets = [CANVAS_PADDING];
@@ -271,10 +257,10 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
         }
 
         categories.forEach((category, index) => {
-          const col = Math.floor(index / rows);
-          const row = index % rows;
+          const row = Math.floor(index / cols);
+          const col = index % cols;
           
-          const x = colXOffsets[col];
+          const x = CANVAS_PADDING + (col * (CATEGORY_WIDTH + HORIZONTAL_GAP));
           const y = rowYOffsets[row];
           
           const categoryCustomization: CategoryCustomization = {
@@ -293,7 +279,7 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
           updatedChartCustomization.categories[category.name] = categoryCustomization;
         });
       } else {
-        // PORTRAIT LAYOUT
+        // A4-style PORTRAIT LAYOUT (with fix)
         let cols = 3;
         if (categoryCount <= 2) cols = 2;
         else if (categoryCount <= 6) cols = 3;
@@ -328,7 +314,7 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
             size: 'medium',
             position: { x, y },
             width: CATEGORY_WIDTH,
-            height: categoryHeights[index],
+            height: rowHeights[row], // <-- This was the fix
             twoColumn: false
           };
           

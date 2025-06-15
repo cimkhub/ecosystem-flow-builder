@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useRef, useState } from 'react';
@@ -84,7 +83,9 @@ export default function EcosystemChart() {
     }
   };
 
-  if (categories.length === 0) {
+  const ifChartIsEmpty = categories.length === 0;
+
+  if (ifChartIsEmpty) {
     return (
       <div className="text-center py-20">
         <div className="relative inline-block">
@@ -101,20 +102,50 @@ export default function EcosystemChart() {
 
   // Calculate canvas size for professional layout
   const calculateCanvasSize = () => {
-    if (categories.length === 0) {
-      return { width: 1200, height: 800 };
+    if (ifChartIsEmpty) {
+      return { width: 1280, height: 720 }; // Default to 16:9 landscape
     }
     const PADDING = 40;
     
-    const allCustomizations = categories.map(c => c.customization);
+    const allCustomizations = categories.map(c => c.customization || { position: {x:0, y:0}, width: 0, height: 0 });
 
-    const width = Math.max(...allCustomizations.map(c => (c.position.x || 0) + (c.width || 0))) + PADDING;
-    const height = Math.max(...allCustomizations.map(c => (c.position.y || 0) + (c.height || 0))) + PADDING;
+    const contentWidth = Math.max(...allCustomizations.map(c => (c.position.x || 0) + (c.width || 0))) + PADDING;
+    const contentHeight = Math.max(...allCustomizations.map(c => (c.position.y || 0) + (c.height || 0))) + PADDING;
     
-    return { 
-      width: Math.max(width, 1100),
-      height: Math.max(height, 800)
-    };
+    if (chartCustomization.layoutOrientation === 'landscape') {
+      // PPT style - 16:9 aspect ratio
+      const LANDSCAPE_ASPECT_RATIO = 16 / 9;
+      
+      let canvasWidth = Math.max(contentWidth, 1280);
+      let canvasHeight = canvasWidth / LANDSCAPE_ASPECT_RATIO;
+
+      if (canvasHeight < contentHeight) {
+        canvasHeight = contentHeight;
+        canvasWidth = canvasHeight * LANDSCAPE_ASPECT_RATIO;
+      }
+
+      return {
+        width: Math.round(canvasWidth),
+        height: Math.round(canvasHeight)
+      };
+
+    } else {
+      // Portrait style - A4-ish aspect ratio (height > width)
+      const PORTRAIT_ASPECT_RATIO = Math.sqrt(2); // height/width
+      
+      let canvasWidth = Math.max(contentWidth, 1100);
+      let canvasHeight = canvasWidth * PORTRAIT_ASPECT_RATIO;
+
+      if (canvasHeight < contentHeight) {
+        canvasHeight = contentHeight;
+        canvasWidth = canvasHeight / PORTRAIT_ASPECT_RATIO;
+      }
+      
+      return { 
+        width: Math.round(canvasWidth),
+        height: Math.round(canvasHeight)
+      };
+    }
   };
 
   const canvasSize = calculateCanvasSize();
@@ -256,4 +287,3 @@ export default function EcosystemChart() {
     </div>
   );
 }
-
