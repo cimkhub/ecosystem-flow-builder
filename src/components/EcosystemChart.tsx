@@ -1,7 +1,8 @@
+
 'use client';
 
 import React, { useRef, useState } from 'react';
-import { Download, Share2, Sparkles, Settings2, Linkedin, Twitter, Reddit } from 'lucide-react';
+import { Download, Share2, Sparkles, Settings2, Linkedin, Twitter, MessageSquare } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { useEcosystemStore } from '../lib/useEcosystemStore';
 import { getContrastColor } from '../lib/colorFromString';
@@ -252,7 +253,7 @@ export default function EcosystemChart() {
                     <span>LinkedIn</span>
                   </Button>
                   <Button variant="outline" className="w-full justify-start" onClick={() => handleShare('reddit')}>
-                    <Reddit className="mr-2 h-4 w-4" />
+                    <MessageSquare className="mr-2 h-4 w-4" />
                     <span>Reddit</span>
                   </Button>
                 </div>
