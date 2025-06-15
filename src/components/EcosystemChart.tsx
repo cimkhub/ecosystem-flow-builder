@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useRef, useState } from 'react';
@@ -55,18 +54,18 @@ export default function EcosystemChart() {
     );
   }
 
-  // Calculate the required canvas size based on category positions and sizes
+  // Calculate canvas size based on the new structured layout
   const calculateCanvasSize = () => {
-    let maxX = 1400; // minimum width
-    let maxY = 1000; // minimum height
+    let maxX = 1600; // Updated minimum width
+    let maxY = 1200; // Updated minimum height
     
     categories.forEach(category => {
       const customization = chartCustomization.categories[category.name] || category.customization;
       if (customization && customization.position) {
-        const rightEdge = customization.position.x + (customization.width || 320);
-        const bottomEdge = customization.position.y + (customization.height || 250);
-        maxX = Math.max(maxX, rightEdge + 20); // 20px margin
-        maxY = Math.max(maxY, bottomEdge + 20); // 20px margin
+        const rightEdge = customization.position.x + (customization.width || 340);
+        const bottomEdge = customization.position.y + (customization.height || 300);
+        maxX = Math.max(maxX, rightEdge + 60); // 60px margin
+        maxY = Math.max(maxY, bottomEdge + 60); // 60px margin
       }
     });
     
@@ -145,28 +144,26 @@ export default function EcosystemChart() {
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent"></div>
         </div>
 
-        {/* Chart Content with absolute positioning for free movement */}
+        {/* Chart Content with structured layout */}
         <div
           ref={chartRef}
           className="relative bg-white overflow-hidden"
           style={{ 
             width: canvasSize.width,
             height: canvasSize.height,
-            minWidth: '1400px',
-            minHeight: '1000px'
+            minWidth: '1600px',
+            minHeight: '1200px'
           }}
         >
           {categories.map((category, categoryIndex) => {
-            // Use the customization from the store (which includes calculated positions)
-            // or fall back to the category's own customization
             const customization = chartCustomization.categories[category.name] || category.customization || {
               backgroundColor: category.color,
               borderColor: category.color,
               textColor: getContrastColor(category.color),
               size: 'medium' as const,
-              position: { x: 50, y: 50 }, // Only use as absolute fallback
-              width: 320,
-              height: 288,
+              position: { x: 60, y: 60 },
+              width: 340,
+              height: 300,
               twoColumn: false
             };
             
