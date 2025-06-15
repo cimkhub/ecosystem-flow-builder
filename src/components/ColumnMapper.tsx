@@ -6,7 +6,11 @@ import { ArrowRight, CheckCircle2, Settings, MapPin } from 'lucide-react';
 import { useEcosystemStore } from '../lib/useEcosystemStore';
 import { ColumnMapping } from '../lib/types';
 
-export default function ColumnMapper() {
+interface ColumnMapperProps {
+  onMappingComplete?: () => void;
+}
+
+export default function ColumnMapper({ onMappingComplete }: ColumnMapperProps) {
   const { rawData, csvColumns, mapColumnsAndCreateCompanies, setShowColumnMapper } = useEcosystemStore();
   const [mapping, setMapping] = useState<ColumnMapping>({
     company_name: '',
@@ -25,6 +29,10 @@ export default function ColumnMapper() {
     }
     mapColumnsAndCreateCompanies(mapping);
     setShowColumnMapper(false);
+    // Call the callback to switch to logos tab
+    if (onMappingComplete) {
+      onMappingComplete();
+    }
   };
 
   const isValid = mapping.company_name && mapping.category;

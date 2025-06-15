@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState } from 'react';
@@ -11,6 +10,10 @@ import { useEcosystemStore } from '../lib/useEcosystemStore';
 export default function Index() {
   const [activeTab, setActiveTab] = useState<'data' | 'logos' | 'chart'>('data');
   const { companies, categories } = useEcosystemStore();
+
+  const handleMappingComplete = () => {
+    setActiveTab('logos');
+  };
 
   const tabs = [
     { 
@@ -158,7 +161,7 @@ export default function Index() {
                       <h2 className="text-3xl font-bold text-gray-900 mb-3">Upload Company Data</h2>
                       <p className="text-gray-600">Import your company data to get started with visualization</p>
                     </div>
-                    <FileUploader />
+                    <FileUploader onMappingComplete={handleMappingComplete} />
                   </div>
                 )}
 

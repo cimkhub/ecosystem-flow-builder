@@ -8,7 +8,11 @@ import { useEcosystemStore } from '../lib/useEcosystemStore';
 import { parseCsvForMapping } from '../lib/csvToJson';
 import ColumnMapper from './ColumnMapper';
 
-export default function FileUploader() {
+interface FileUploaderProps {
+  onMappingComplete?: () => void;
+}
+
+export default function FileUploader({ onMappingComplete }: FileUploaderProps) {
   const { setUploadErrors, uploadErrors, showColumnMapper, setRawData } = useEcosystemStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
@@ -64,7 +68,7 @@ export default function FileUploader() {
   });
 
   if (showColumnMapper) {
-    return <ColumnMapper />;
+    return <ColumnMapper onMappingComplete={onMappingComplete} />;
   }
 
   return (
