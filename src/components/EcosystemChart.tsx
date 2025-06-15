@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useRef, useState } from 'react';
@@ -42,10 +41,10 @@ export default function EcosystemChart() {
 
   const getSizeClasses = (size: 'small' | 'medium' | 'large') => {
     switch (size) {
-      case 'small': return { container: 'col-span-1 max-w-xs', width: 'w-80', height: 'min-h-72' };
-      case 'medium': return { container: 'col-span-1 max-w-sm', width: 'w-96', height: 'min-h-80' };
-      case 'large': return { container: 'col-span-1 max-w-md', width: 'w-[26rem]', height: 'min-h-96' };
-      default: return { container: 'col-span-1 max-w-sm', width: 'w-96', height: 'min-h-80' };
+      case 'small': return { container: 'col-span-1', width: 'w-72', height: 'min-h-64' };
+      case 'medium': return { container: 'col-span-1', width: 'w-80', height: 'min-h-72' };
+      case 'large': return { container: 'col-span-1', width: 'w-96', height: 'min-h-80' };
+      default: return { container: 'col-span-1', width: 'w-80', height: 'min-h-72' };
     }
   };
 
@@ -164,12 +163,12 @@ export default function EcosystemChart() {
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent"></div>
         </div>
 
-        {/* Chart Content with better spacing */}
+        {/* Chart Content with much more spacing */}
         <div
           ref={chartRef}
-          className="p-12"
+          className="p-16"
         >
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-12 justify-items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-20 justify-items-center">
             {categories.map((category, categoryIndex) => {
               const customization = chartCustomization.categories[category.name] || {
                 backgroundColor: category.color,
