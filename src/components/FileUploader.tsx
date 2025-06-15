@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useCallback, useState } from 'react';
@@ -188,7 +187,7 @@ export default function FileUploader({ onMappingComplete }: FileUploaderProps) {
               <span className="text-sm text-gray-600">Any column structure</span>
             </div>
             <code className="text-xs text-gray-700 bg-gray-50 p-2 rounded block">
-              company, type, logo, sector
+              company, category, subcategory, logo, sector
             </code>
           </div>
           
@@ -198,7 +197,7 @@ export default function FileUploader({ onMappingComplete }: FileUploaderProps) {
               <span className="text-sm text-gray-600">Any object structure</span>
             </div>
             <code className="text-xs text-gray-700 bg-gray-50 p-2 rounded block">
-              {"[{\"name\": \"...\", \"type\": \"...\"}]"}
+              {"[{\"name\": \"...\", \"category\": \"...\", \"subcategory\": \"...\"}]"}
             </code>
           </div>
         </div>
