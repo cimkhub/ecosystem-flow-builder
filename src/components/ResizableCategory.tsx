@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -9,12 +10,14 @@ interface ResizableCategoryProps {
   category: Category;
   customization: CategoryCustomization;
   categoryIndex: number;
+  showLogoBackground: boolean;
 }
 
 export default function ResizableCategory({ 
   category, 
   customization, 
-  categoryIndex 
+  categoryIndex,
+  showLogoBackground
 }: ResizableCategoryProps) {
   const { updateCategoryCustomization } = useEcosystemStore();
   const [isResizing, setIsResizing] = useState(false);
@@ -196,6 +199,10 @@ export default function ResizableCategory({
   const boxWidth = customization.width || 320;
   const boxHeight = customization.height || 200;
 
+  const logoContainerClasses = showLogoBackground
+    ? 'mb-1 p-1 bg-white rounded-md shadow-sm flex-shrink-0'
+    : 'mb-1 flex-shrink-0';
+
   return (
     <div
       ref={categoryRef}
@@ -276,7 +283,7 @@ export default function ResizableCategory({
                         style={{ animationDelay: `${(categoryIndex * 150) + (subcategoryIndex * 100) + (companyIndex * 50)}ms` }}
                       >
                         {company.logoUrl ? (
-                          <div className="mb-1 p-1 bg-white rounded-md shadow-sm flex-shrink-0">
+                          <div className={logoContainerClasses}>
                             <img
                               src={company.logoUrl}
                               alt={company.company_name}
@@ -315,7 +322,7 @@ export default function ResizableCategory({
                   style={{ animationDelay: `${(categoryIndex * 150) + (companyIndex * 50)}ms` }}
                 >
                   {company.logoUrl ? (
-                    <div className="mb-1 p-1 bg-white rounded-md shadow-sm flex-shrink-0">
+                    <div className={logoContainerClasses}>
                       <img
                         src={company.logoUrl}
                         alt={company.company_name}

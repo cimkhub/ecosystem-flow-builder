@@ -208,6 +208,7 @@ export default function EcosystemChart() {
                 category={category}
                 customization={customization}
                 categoryIndex={categoryIndex}
+                showLogoBackground={!!chartCustomization.showLogoBackground}
               />
             );
           })}
