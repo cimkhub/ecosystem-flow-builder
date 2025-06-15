@@ -166,7 +166,7 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
 
         // Calculate optimal width and height for this category
         const totalCompanies = allCompanies.length;
-        let optimalWidth = 300;
+        let optimalWidth = 320;
         let optimalHeight = 250;
         
         if (totalCompanies > 0) {
@@ -199,7 +199,7 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
             
             if (area < bestArea) {
               bestArea = area;
-              optimalWidth = Math.max(300, contentWidth);
+              optimalWidth = Math.max(320, contentWidth);
               optimalHeight = Math.max(250, totalHeight);
             }
           }
@@ -215,7 +215,7 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
             borderColor: defaultColor,
             textColor: getContrastColor(defaultColor),
             size: 'medium' as const,
-            position: { x: 0, y: 0 }, // Will be calculated after all categories are created
+            position: { x: 0, y: 0 }, // Will be calculated below
             width: optimalWidth,
             height: optimalHeight,
             twoColumn: false
@@ -224,79 +224,74 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
       })
       .sort((a, b) => a.name.localeCompare(b.name));
 
-    // Calculate grid positions to fill the entire canvas
-    const canvasWidth = 1400; // Increased canvas width
-    const canvasHeight = 1000; // Fixed canvas height
-    const margin = 20; // Reduced margin for better space utilization
+    // Calculate positions for each category with better distribution
+    const canvasWidth = 1400;
+    const canvasHeight = 1000;
+    const margin = 30;
     
     if (categories.length === 0) {
       set({ categories });
       return;
     }
 
-    // Calculate optimal grid layout
+    // Calculate grid layout based on number of categories
     const totalCategories = categories.length;
-    let bestLayout = { cols: 1, rows: totalCategories };
-    let minWastedSpace = Infinity;
-
-    // Try different column configurations to find the best fit
-    for (let cols = 1; cols <= Math.min(5, totalCategories); cols++) {
-      const rows = Math.ceil(totalCategories / cols);
-      const avgWidth = categories.reduce((sum, cat) => sum + (cat.customization?.width || 300), 0) / totalCategories;
-      const avgHeight = categories.reduce((sum, cat) => sum + (cat.customization?.height || 250), 0) / totalCategories;
-      
-      const requiredWidth = cols * avgWidth + (cols + 1) * margin;
-      const requiredHeight = rows * avgHeight + (rows + 1) * margin;
-      
-      // Check if this layout fits in the canvas
-      if (requiredWidth <= canvasWidth && requiredHeight <= canvasHeight) {
-        const wastedSpace = (canvasWidth * canvasHeight) - (requiredWidth * requiredHeight);
-        if (wastedSpace < minWastedSpace) {
-          minWastedSpace = wastedSpace;
-          bestLayout = { cols, rows };
-        }
-      }
-    }
-
-    const { cols: optimalColumns } = bestLayout;
+    let columns: number;
     
-    // Position categories in the grid
+    if (totalCategories <= 2) {
+      columns = 2;
+    } else if (totalCategories <= 6) {
+      columns = 3;
+    } else if (totalCategories <= 12) {
+      columns = 4;
+    } else {
+      columns = 5;
+    }
+    
+    const rows = Math.ceil(totalCategories / columns);
+    
+    // Calculate available space per category
+    const availableWidth = (canvasWidth - (margin * (columns + 1))) / columns;
+    const availableHeight = (canvasHeight - (margin * (rows + 1))) / rows;
+    
+    // Position each category in the grid
+    const updatedChartCustomization = { ...chartCustomization };
+    
     categories.forEach((category, index) => {
-      const row = Math.floor(index / optimalColumns);
-      const col = index % optimalColumns;
+      const row = Math.floor(index / columns);
+      const col = index % columns;
       
-      // Calculate available space for this column
-      const availableWidth = (canvasWidth - ((optimalColumns + 1) * margin)) / optimalColumns;
-      const categoryWidth = Math.min(category.customization?.width || 300, availableWidth);
+      // Calculate position
+      const x = margin + (col * (availableWidth + margin));
+      const y = margin + (row * (availableHeight + margin));
       
-      // Position X - center boxes within their columns
-      const x = margin + (col * (availableWidth + margin)) + ((availableWidth - categoryWidth) / 2);
+      // Ensure the category fits within available space
+      const categoryWidth = Math.min(category.customization?.width || 320, availableWidth);
+      const categoryHeight = Math.min(category.customization?.height || 250, availableHeight);
       
-      // Position Y - stack rows with dynamic spacing
-      let y = margin;
-      for (let prevRowIndex = 0; prevRowIndex < row; prevRowIndex++) {
-        // Find the tallest box in the previous row
-        let maxHeightInRow = 0;
-        for (let prevColIndex = 0; prevColIndex < optimalColumns; prevColIndex++) {
-          const prevCategoryIndex = prevRowIndex * optimalColumns + prevColIndex;
-          if (prevCategoryIndex < categories.length) {
-            const prevCategory = categories[prevCategoryIndex];
-            maxHeightInRow = Math.max(maxHeightInRow, prevCategory.customization?.height || 250);
-          }
-        }
-        y += maxHeightInRow + margin;
-      }
+      // Update the category customization in the store
+      const categoryCustomization: CategoryCustomization = {
+        backgroundColor: category.customization?.backgroundColor || category.color,
+        borderColor: category.customization?.borderColor || category.color,
+        textColor: category.customization?.textColor || getContrastColor(category.color),
+        size: category.customization?.size || 'medium',
+        position: { x, y },
+        width: categoryWidth,
+        height: categoryHeight,
+        twoColumn: category.customization?.twoColumn || false
+      };
       
-      // Update the category's position and ensure it fits properly
-      if (category.customization) {
-        category.customization.position = { 
-          x: Math.max(margin, Math.min(x, canvasWidth - categoryWidth - margin)), 
-          y: Math.max(margin, y)
-        };
-        category.customization.width = categoryWidth;
-      }
+      // Update both the category's customization and the store's chart customization
+      category.customization = categoryCustomization;
+      updatedChartCustomization.categories[category.name] = categoryCustomization;
+      
+      console.log(`Positioned category ${category.name} at (${x}, ${y}) with size ${categoryWidth}x${categoryHeight}`);
     });
 
-    set({ categories });
+    // Update the store with the new positions
+    set({ 
+      categories,
+      chartCustomization: updatedChartCustomization
+    });
   },
 }));
