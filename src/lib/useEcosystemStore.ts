@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { EcosystemState, Company, Category, RawDataRow, ColumnMapping, ChartCustomization, CategoryCustomization } from './types';
 import { colorFromString, getContrastColor } from './colorFromString';
@@ -84,45 +85,6 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
         }
       }
     });
-
-    // Recalculate all positions when a box is resized
-    get().repositionAllCategories();
-  },
-
-  repositionAllCategories: () => {
-    const { categories, chartCustomization } = get();
-    
-    // Sort categories to maintain consistent ordering
-    const sortedCategories = [...categories].sort((a, b) => a.name.localeCompare(b.name));
-    
-    const containerWidth = 1200; // Chart container width
-    const margin = 50; // Space between boxes
-    let currentX = margin;
-    let currentY = margin;
-    let rowHeight = 0;
-    
-    sortedCategories.forEach((category) => {
-      const currentCustomization = chartCustomization.categories[category.name];
-      const boxWidth = currentCustomization?.width || 320;
-      const boxHeight = currentCustomization?.height || 250;
-      
-      // Check if box fits in current row
-      if (currentX + boxWidth > containerWidth - margin && currentX > margin) {
-        // Move to next row
-        currentX = margin;
-        currentY += rowHeight + margin;
-        rowHeight = 0;
-      }
-      
-      // Update position
-      get().updateCategoryCustomization(category.name, {
-        position: { x: currentX, y: currentY }
-      });
-      
-      // Update for next box
-      currentX += boxWidth + margin;
-      rowHeight = Math.max(rowHeight, boxHeight);
-    });
   },
 
   mapColumnsAndCreateCompanies: (mapping: ColumnMapping) => {
@@ -202,13 +164,13 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
         const existingCustomization = chartCustomization.categories[name];
         const defaultColor = colorFromString(name);
 
-        // Calculate optimal initial dimensions
+        // Calculate optimal dimensions first
         const totalCompanies = allCompanies.length;
         let optimalWidth = 320;
         let optimalHeight = 250;
         
         if (totalCompanies > 0) {
-          // Calculate minimum dimensions needed to show all content
+          // Try different column configurations to find the most efficient layout
           const itemWidth = 120;
           const itemHeight = 68;
           const padding = 48;
@@ -216,24 +178,62 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
           const subcategoryHeaderHeight = 28;
           const subcategorySpacing = 16;
           
-          // Start with 2 columns and calculate needed height
-          const cols = 2;
-          optimalWidth = Math.max(320, cols * itemWidth + padding);
+          let bestArea = Infinity;
           
-          let totalHeight = headerHeight;
-          if (subcategories.length > 1) {
-            subcategories.forEach(subcategory => {
-              const companiesInSubcategory = subcategory.companies.length;
-              const rowsNeeded = Math.ceil(companiesInSubcategory / cols);
-              totalHeight += subcategoryHeaderHeight + (rowsNeeded * itemHeight) + subcategorySpacing;
-            });
-          } else {
-            const rowsNeeded = Math.ceil(totalCompanies / cols);
-            totalHeight += rowsNeeded * itemHeight;
+          for (let cols = 1; cols <= Math.min(6, totalCompanies); cols++) {
+            const contentWidth = cols * itemWidth + padding;
+            let totalHeight = headerHeight;
+            
+            if (subcategories.length > 1) {
+              subcategories.forEach(subcategory => {
+                const companiesInSubcategory = subcategory.companies.length;
+                const rowsNeeded = Math.ceil(companiesInSubcategory / cols);
+                totalHeight += subcategoryHeaderHeight + (rowsNeeded * itemHeight) + subcategorySpacing;
+              });
+            } else {
+              const rowsNeeded = Math.ceil(totalCompanies / cols);
+              totalHeight += rowsNeeded * itemHeight;
+            }
+            
+            totalHeight += padding;
+            const area = contentWidth * totalHeight;
+            
+            if (area < bestArea) {
+              bestArea = area;
+              optimalWidth = contentWidth;
+              optimalHeight = totalHeight;
+            }
           }
-          
-          optimalHeight = Math.max(250, totalHeight + padding);
         }
+
+        // Calculate grid-based positioning with dynamic spacing based on box sizes
+        const margin = 40;
+        const canvasWidth = 1200;
+        
+        // Calculate how many boxes can fit per row based on their width
+        const boxWidthWithMargin = optimalWidth + margin;
+        const columnsPerRow = Math.max(1, Math.floor((canvasWidth - margin) / boxWidthWithMargin));
+        
+        const row = Math.floor(categoryIndex / columnsPerRow);
+        const col = categoryIndex % columnsPerRow;
+        
+        // Use dynamic heights for vertical positioning
+        let yOffset = margin;
+        
+        // Calculate Y position based on previous boxes in the same column
+        for (let prevIndex = col; prevIndex < categoryIndex; prevIndex += columnsPerRow) {
+          const prevCategory = Array.from(categoryMap.keys())[prevIndex];
+          if (prevCategory && chartCustomization.categories[prevCategory]) {
+            yOffset += (chartCustomization.categories[prevCategory].height || 250) + margin;
+          } else {
+            yOffset += 250 + margin; // Default height estimate
+          }
+        }
+        
+        const defaultPosition = {
+          x: col * boxWidthWithMargin + margin,
+          y: yOffset
+        };
 
         return {
           name,
@@ -245,7 +245,7 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
             borderColor: defaultColor,
             textColor: getContrastColor(defaultColor),
             size: 'medium' as const,
-            position: { x: 0, y: 0 }, // Will be set by repositionAllCategories
+            position: defaultPosition,
             width: optimalWidth,
             height: optimalHeight,
             twoColumn: false
@@ -255,8 +255,5 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
       .sort((a, b) => a.name.localeCompare(b.name));
 
     set({ categories });
-    
-    // Position all categories after generating them
-    get().repositionAllCategories();
   },
 }));
