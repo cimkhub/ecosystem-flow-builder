@@ -25,26 +25,29 @@ export default function EcosystemChart() {
         useCORS: true,
         allowTaint: false,
         onclone: (clonedDoc) => {
-          // Robust fix for gradient text on H1 during export.
-          // We find the H1 in the cloned document, remove its classes,
-          // and apply styles directly for maximum compatibility.
+          // NEW APPROACH: Replace the H1 element entirely for export.
+          // This avoids all issues with html2canvas trying to render
+          // complex CSS like `background-clip: text`.
           const h1 = clonedDoc.querySelector('h1');
-          if (h1) {
-            // Remove all existing classes to prevent conflicts
-            h1.removeAttribute('class');
-            
-            // Re-apply styles manually for maximum compatibility with html2canvas.
-            h1.style.fontSize = '3.75rem'; // from text-6xl
-            h1.style.fontWeight = '900'; // from font-black
-            h1.style.color = '#F0F9FF'; // light blue/white for contrast
-            h1.style.fontFamily = 'Arial, Helvetica, sans-serif'; // a very safe font stack
-            h1.style.background = 'none';
-            h1.style.webkitBackgroundClip = 'initial';
-            h1.style.backgroundClip = 'initial';
-            h1.style.letterSpacing = '-0.025em'; // from tracking-tight
-            h1.style.lineHeight = '1.25'; // from leading-tight
-            h1.style.marginBottom = '1rem'; // from mb-4
-            h1.style.textAlign = 'center';
+          if (h1 && h1.parentElement) {
+            const titleText = h1.innerText;
+
+            // Create a new, simple paragraph element for the title.
+            const p = clonedDoc.createElement('p');
+            p.innerText = titleText;
+
+            // Apply simple, safe inline styles that html2canvas can handle.
+            p.style.fontSize = '60px'; // text-6xl
+            p.style.fontWeight = '900'; // font-black
+            p.style.color = '#F0F9FF'; // Solid light color
+            p.style.fontFamily = 'Arial, sans-serif'; // Web-safe font
+            p.style.textAlign = 'center';
+            p.style.margin = '0 auto 1rem auto';
+            p.style.lineHeight = '1.1';
+            p.style.letterSpacing = '-0.025em';
+
+            // Replace the original H1 with our new, simple P element.
+            h1.parentElement.replaceChild(p, h1);
           }
 
           // Fix for animated elements (like categories) not appearing in export
