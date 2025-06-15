@@ -11,7 +11,7 @@ import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 
 export default function EcosystemChart() {
-  const { categories, chartCustomization, updateChartCustomization } = useEcosystemStore();
+  const { categories, chartCustomization, updateChartCustomization, showCompanyText, updateShowCompanyText } = useEcosystemStore();
   const exportRef = useRef<HTMLDivElement>(null);
   const [showCustomization, setShowCustomization] = useState(false);
 
@@ -183,6 +183,16 @@ export default function EcosystemChart() {
                 }}
             />
           </div>
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="company-text-toggle" className="text-sm font-medium text-gray-700">Name</Label>
+            <Switch
+                id="company-text-toggle"
+                checked={showCompanyText}
+                onCheckedChange={(checked) => {
+                    updateShowCompanyText(checked);
+                }}
+            />
+          </div>
           <button
             onClick={() => setShowCustomization(true)}
             className="flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-2 rounded-xl transition-all duration-200 hover:scale-105 shadow-lg"
@@ -260,6 +270,7 @@ export default function EcosystemChart() {
                 customization={customization}
                 categoryIndex={categoryIndex}
                 showLogoBackground={!!chartCustomization.showLogoBackground}
+                showCompanyText={showCompanyText}
               />
             );
           })}

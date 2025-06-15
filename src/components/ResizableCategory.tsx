@@ -10,13 +10,15 @@ interface ResizableCategoryProps {
   customization: CategoryCustomization;
   categoryIndex: number;
   showLogoBackground: boolean;
+  showCompanyText: boolean;
 }
 
 export default function ResizableCategory({ 
   category, 
   customization, 
   categoryIndex,
-  showLogoBackground
+  showLogoBackground,
+  showCompanyText
 }: ResizableCategoryProps) {
   const { updateCategoryCustomization } = useEcosystemStore();
   const [isResizing, setIsResizing] = useState(false);
@@ -38,7 +40,10 @@ export default function ResizableCategory({
     const HEADER_H = { small: 60, medium: 72, large: 90 }[size];
     const SUBCAT_HEADER_H = { small: 32, medium: 36, large: 40 }[size];
     const SUBCAT_SPACING_Y = 16;
-    const ITEM_H = { small: 56, medium: 76, large: 80 }[size]; // Medium is updated for larger logos
+    
+    const ITEM_H_WITH_TEXT = { small: 56, medium: 76, large: 80 }[size];
+    const ITEM_H_WITHOUT_TEXT = { small: 40, medium: 60, large: 64 }[size];
+    const ITEM_H = showCompanyText ? ITEM_H_WITH_TEXT : ITEM_H_WITHOUT_TEXT;
 
     const availableHeight = boxHeight - HEADER_H - PADDING_Y;
 
@@ -83,7 +88,7 @@ export default function ResizableCategory({
     
     setOptimalColumns(bestConfig.columns);
 
-  }, [category.subcategories, customization.height, customization.size, category.name]);
+  }, [category.subcategories, customization.height, customization.size, category.name, showCompanyText]);
 
 
   const handleMouseDown = (e: React.MouseEvent, direction: 'se' | 'e' | 's') => {
@@ -300,12 +305,14 @@ export default function ResizableCategory({
                             </span>
                           </div>
                         )}
-                        <span 
-                          className={`${dynamicSizes.companyFont} font-medium leading-tight text-center`}
-                          style={{ color: showLogoBackground ? '#1f2937' : customization.textColor }}
-                        >
-                          {company.company_name}
-                        </span>
+                        {showCompanyText && (
+                          <span 
+                            className={`${dynamicSizes.companyFont} font-medium leading-tight text-center`}
+                            style={{ color: showLogoBackground ? '#1f2937' : customization.textColor }}
+                          >
+                            {company.company_name}
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -342,12 +349,14 @@ export default function ResizableCategory({
                       </span>
                     </div>
                   )}
-                  <span 
-                    className={`${dynamicSizes.companyFont} font-medium leading-tight text-center`}
-                    style={{ color: showLogoBackground ? '#1f2937' : customization.textColor }}
-                  >
-                    {company.company_name}
-                  </span>
+                  {showCompanyText && (
+                    <span 
+                      className={`${dynamicSizes.companyFont} font-medium leading-tight text-center`}
+                      style={{ color: showLogoBackground ? '#1f2937' : customization.textColor }}
+                    >
+                      {company.company_name}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>

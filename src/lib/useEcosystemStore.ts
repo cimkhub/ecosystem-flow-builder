@@ -2,7 +2,12 @@ import { create } from 'zustand';
 import { EcosystemState, Company, Category, RawDataRow, ColumnMapping, ChartCustomization, CategoryCustomization } from './types';
 import { colorFromString, getContrastColor } from './colorFromString';
 
-export const useEcosystemStore = create<EcosystemState>((set, get) => ({
+type ExtendedEcosystemState = EcosystemState & {
+  showCompanyText: boolean;
+  updateShowCompanyText: (show: boolean) => void;
+};
+
+export const useEcosystemStore = create<ExtendedEcosystemState>((set, get) => ({
   companies: [],
   logos: new Map(),
   categories: [],
@@ -10,6 +15,7 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
   rawData: [],
   csvColumns: [],
   showColumnMapper: false,
+  showCompanyText: true,
   chartCustomization: {
     title: 'AI Ecosystem Map',
     subtitle: 'Market Landscape Overview',
@@ -49,6 +55,11 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
 
   setShowColumnMapper: (show: boolean) => {
     set({ showColumnMapper: show });
+  },
+
+  updateShowCompanyText: (show: boolean) => {
+    set({ showCompanyText: show });
+    get().generateCategories();
   },
 
   updateChartCustomization: (customization: Partial<ChartCustomization>) => {
@@ -123,7 +134,7 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
   },
 
   generateCategories: () => {
-    const { companies, logos, chartCustomization } = get();
+    const { companies, logos, chartCustomization, showCompanyText } = get();
     const categoryMap = new Map<string, Map<string, Company[]>>();
 
     companies.forEach(company => {
@@ -201,7 +212,7 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
         const HEADER_H = 120;
         const SUBCAT_HEADER_H = 36;
         const SUBCAT_SPACING_Y = 16;
-        const ITEM_H = 76;
+        const ITEM_H = showCompanyText ? 76 : 56;
         const ITEM_GAP_Y = 8;
         
         let contentHeight = 0;
