@@ -1,8 +1,7 @@
-
 'use client';
 
 import React, { useRef, useState } from 'react';
-import { Download, Share2, Sparkles, Settings2 } from 'lucide-react';
+import { Download, Share2, Sparkles, Settings2, Linkedin, Twitter, Reddit } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { useEcosystemStore } from '../lib/useEcosystemStore';
 import { getContrastColor } from '../lib/colorFromString';
@@ -10,6 +9,8 @@ import ChartCustomizationPanel from './ChartCustomizationPanel';
 import ResizableCategory from './ResizableCategory';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 
 export default function EcosystemChart() {
   const { categories, chartCustomization, updateChartCustomization, showCompanyText, updateShowCompanyText } = useEcosystemStore();
@@ -81,6 +82,28 @@ export default function EcosystemChart() {
       link.click();
     } catch (error) {
       console.error('Error exporting chart:', error);
+    }
+  };
+
+  const handleShare = (platform: 'twitter' | 'linkedin' | 'reddit') => {
+    const url = encodeURIComponent(window.location.href);
+    const text = encodeURIComponent(chartCustomization.title);
+    let shareUrl = '';
+
+    switch (platform) {
+      case 'twitter':
+        shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${text}`;
+        break;
+      case 'linkedin':
+        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${url}`;
+        break;
+      case 'reddit':
+        shareUrl = `https://www.reddit.com/submit?url=${url}&title=${text}`;
+        break;
+    }
+
+    if (shareUrl) {
+      window.open(shareUrl, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -204,10 +227,38 @@ export default function EcosystemChart() {
             <span>Export PNG</span>
           </button>
           
-          <button className="flex items-center space-x-2 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 text-white px-6 py-2 rounded-xl transition-all duration-200 hover:scale-105 shadow-lg">
-            <Share2 className="h-4 w-4" />
-            <span>Share</span>
-          </button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="flex items-center space-x-2 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 text-white px-6 py-2 rounded-xl transition-all duration-200 hover:scale-105 shadow-lg">
+                <Share2 className="h-4 w-4" />
+                <span>Share</span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-56">
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <h4 className="font-medium leading-none">Share Map</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Share this ecosystem map with others.
+                  </p>
+                </div>
+                <div className="grid gap-2">
+                  <Button variant="outline" className="w-full justify-start" onClick={() => handleShare('twitter')}>
+                    <Twitter className="mr-2 h-4 w-4" />
+                    <span>Twitter</span>
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start" onClick={() => handleShare('linkedin')}>
+                    <Linkedin className="mr-2 h-4 w-4" />
+                    <span>LinkedIn</span>
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start" onClick={() => handleShare('reddit')}>
+                    <Reddit className="mr-2 h-4 w-4" />
+                    <span>Reddit</span>
+                  </Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
       </div>
 
       <div
