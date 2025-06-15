@@ -26,15 +26,25 @@ export default function EcosystemChart() {
         allowTaint: false,
         onclone: (clonedDoc) => {
           // Robust fix for gradient text on H1 during export.
-          // We find the H1 in the cloned document and apply inline styles
-          // to override the text-gradient effect, which html2canvas
-          // cannot render correctly. We apply a solid text color instead.
+          // We find the H1 in the cloned document, remove its classes,
+          // and apply styles directly for maximum compatibility.
           const h1 = clonedDoc.querySelector('h1');
           if (h1) {
+            // Remove all existing classes to prevent conflicts
+            h1.removeAttribute('class');
+            
+            // Re-apply styles manually for maximum compatibility with html2canvas.
+            h1.style.fontSize = '3.75rem'; // from text-6xl
+            h1.style.fontWeight = '900'; // from font-black
+            h1.style.color = '#F0F9FF'; // light blue/white for contrast
+            h1.style.fontFamily = 'Arial, Helvetica, sans-serif'; // a very safe font stack
             h1.style.background = 'none';
             h1.style.webkitBackgroundClip = 'initial';
             h1.style.backgroundClip = 'initial';
-            h1.style.color = '#F0F9FF'; // A very light blue, ensures high contrast
+            h1.style.letterSpacing = '-0.025em'; // from tracking-tight
+            h1.style.lineHeight = '1.25'; // from leading-tight
+            h1.style.marginBottom = '1rem'; // from mb-4
+            h1.style.textAlign = 'center';
           }
 
           // Fix for animated elements (like categories) not appearing in export
