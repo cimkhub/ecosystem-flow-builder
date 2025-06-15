@@ -19,38 +19,51 @@ export default function EcosystemChart() {
   const exportChart = async () => {
     if (!exportRef.current) return;
 
+    // Capture text values directly from the state for safety
+    const titleText = chartCustomization.title;
+    const subtitleText = chartCustomization.subtitle;
+
     try {
       const canvas = await html2canvas(exportRef.current, {
         scale: 2,
         useCORS: true,
         allowTaint: false,
         onclone: (clonedDoc) => {
-          // NEW APPROACH: Replace the H1 element entirely for export.
-          // This avoids all issues with html2canvas trying to render
-          // complex CSS like `background-clip: text`.
-          const h1 = clonedDoc.querySelector('h1');
-          if (h1 && h1.parentElement) {
-            const titleText = h1.innerText;
-
-            // Create a new, simple paragraph element for the title.
-            const p = clonedDoc.createElement('p');
-            p.innerText = titleText;
-
-            // Apply simple, safe inline styles that html2canvas can handle.
-            p.style.fontSize = '60px'; // text-6xl
-            p.style.fontWeight = '900'; // font-black
-            p.style.color = '#F0F9FF'; // Solid light color
-            p.style.fontFamily = 'Arial, sans-serif'; // Web-safe font
-            p.style.textAlign = 'center';
-            p.style.margin = '0 auto 1rem auto';
-            p.style.lineHeight = '1.1';
-            p.style.letterSpacing = '-0.025em';
-
-            // Replace the original H1 with our new, simple P element.
-            h1.parentElement.replaceChild(p, h1);
+          // --- NEW, MORE ROBUST HEADER REPLACEMENT ---
+          // This approach rebuilds the header from scratch for the export,
+          // avoiding all issues with complex CSS (gradients, animations).
+          const header = clonedDoc.querySelector('.professional-header');
+          if (header) {
+            // Clear out all complex, animated inner elements
+            header.innerHTML = '';
+            
+            // Rebuild a simple, static version for export
+            const titleEl = clonedDoc.createElement('h1');
+            titleEl.innerText = titleText;
+            titleEl.style.fontSize = '60px';
+            titleEl.style.fontWeight = '900';
+            titleEl.style.color = '#F0F9FF'; // Solid light color
+            titleEl.style.fontFamily = 'Arial, sans-serif'; // Web-safe font
+            titleEl.style.textAlign = 'center';
+            titleEl.style.margin = '0';
+            titleEl.style.paddingBottom = '1rem';
+            
+            const subtitleEl = clonedDoc.createElement('p');
+            subtitleEl.innerText = subtitleText;
+            subtitleEl.style.fontSize = '24px';
+            subtitleEl.style.fontWeight = '300';
+            subtitleEl.style.color = '#D1D5DB'; // text-gray-300
+            subtitleEl.style.fontFamily = 'Arial, sans-serif';
+            subtitleEl.style.textAlign = 'center';
+            subtitleEl.style.margin = '0 auto';
+            subtitleEl.style.maxWidth = '42rem';
+            
+            // The header already has padding from its classes, so we can just append
+            header.appendChild(titleEl);
+            header.appendChild(subtitleEl);
           }
 
-          // Fix for animated elements (like categories) not appearing in export
+          // Fix for other animated elements (like categories) not appearing in export
           const animatedElements = clonedDoc.querySelectorAll('.animate-fade-in, .animate-pulse, .animate-bounce, .animate-ping');
           animatedElements.forEach(el => {
             const htmlEl = el as HTMLElement;
@@ -167,7 +180,7 @@ export default function EcosystemChart() {
         className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-xl border border-gray-100"
       >
         {/* Professional Header Design */}
-        <div className="relative text-center py-16 px-8 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-hidden">
+        <div className="professional-header relative text-center py-16 px-8 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 via-blue-600/10 to-cyan-600/10"></div>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(120,119,198,0.3),transparent_50%)]"></div>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(120,200,255,0.2),transparent_50%)]"></div>
