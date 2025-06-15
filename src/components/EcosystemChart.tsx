@@ -24,6 +24,26 @@ export default function EcosystemChart() {
         scale: 2,
         useCORS: true,
         allowTaint: false,
+        onclone: (clonedDoc) => {
+          // Fix for gradient text on H1 not rendering in export
+          const h1 = clonedDoc.querySelector('h1');
+          if (h1) {
+            // Remove classes that create the gradient text effect
+            h1.classList.remove('text-transparent', 'bg-clip-text', 'bg-gradient-to-r', 'from-white', 'via-cyan-100', 'to-purple-200');
+            // Apply a solid, slightly off-white color as a fallback for the export
+            h1.style.color = '#f0f5ff';
+          }
+
+          // Fix for animated elements (like categories) not appearing in export
+          const animatedElements = clonedDoc.querySelectorAll('.animate-fade-in');
+          animatedElements.forEach(el => {
+            const htmlEl = el as HTMLElement;
+            // Disable animation and set final state for capture
+            htmlEl.style.animation = 'none';
+            htmlEl.style.opacity = '1';
+            htmlEl.style.transform = 'none';
+          });
+        },
       });
 
       const link = document.createElement('a');
