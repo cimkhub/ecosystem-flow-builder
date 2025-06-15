@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -27,51 +26,76 @@ export default function ResizableCategory({
   const startSize = useRef({ width: 0, height: 0 });
   const startPosition = useRef({ x: 0, y: 0 });
   const [optimalColumns, setOptimalColumns] = useState(2);
+  const [calculatedDimensions, setCalculatedDimensions] = useState({ width: 320, height: 288 });
 
-  // Calculate optimal number of columns based on available space and content
+  // Calculate optimal dimensions and columns to show all content
   useEffect(() => {
-    if (!contentRef.current) return;
+    if (!category.subcategories) return;
     
-    const availableWidth = (customization.width || 320) - 48; // Subtract padding
-    const availableHeight = (customization.height || 288) - 120; // Subtract header and padding
-    
-    const totalCompanies = category.subcategories?.reduce((total, sub) => total + sub.companies.length, 0) || 0;
+    const totalCompanies = category.subcategories.reduce((total, sub) => total + sub.companies.length, 0);
     
     if (totalCompanies === 0) {
       setOptimalColumns(1);
+      setCalculatedDimensions({ width: 320, height: 200 });
       return;
     }
 
     // Calculate item dimensions based on size
     const itemHeight = customization.size === 'small' ? 56 : customization.size === 'large' ? 80 : 68;
-    const itemWidth = 120; // Approximate width for company items
+    const itemWidth = 120;
+    const padding = customization.size === 'small' ? 32 : customization.size === 'large' ? 64 : 48;
+    const headerHeight = customization.size === 'small' ? 80 : customization.size === 'large' ? 120 : 100;
     
-    // Try different column counts to find the best fit
-    let bestColumns = 1;
-    let bestFit = 0;
+    // Calculate subcategory header heights
+    const subcategoryHeaderHeight = customization.size === 'small' ? 24 : customization.size === 'large' ? 32 : 28;
+    const subcategorySpacing = 16;
     
-    for (let cols = 1; cols <= Math.min(6, Math.floor(availableWidth / itemWidth)); cols++) {
-      const itemsPerColumn = Math.ceil(totalCompanies / cols);
-      const neededHeight = itemsPerColumn * itemHeight;
-      const neededWidth = cols * itemWidth;
+    // Calculate minimum width needed
+    const minWidth = Math.max(200, itemWidth * 2 + padding);
+    const maxWidth = itemWidth * 6 + padding;
+    
+    let bestConfig = { columns: 1, width: minWidth, height: 200 };
+    let minArea = Infinity;
+    
+    // Try different column configurations to find the most space-efficient layout
+    for (let cols = 1; cols <= 6; cols++) {
+      const contentWidth = cols * itemWidth + padding;
       
-      // Check if it fits and calculate how well it utilizes space
-      if (neededHeight <= availableHeight && neededWidth <= availableWidth) {
-        const utilization = (neededHeight / availableHeight) * (neededWidth / availableWidth);
-        if (utilization > bestFit) {
-          bestFit = utilization;
-          bestColumns = cols;
-        }
+      // Calculate height needed for this column configuration
+      let totalHeight = headerHeight;
+      
+      if (category.subcategories.length > 1) {
+        // Multiple subcategories - calculate height for each section
+        category.subcategories.forEach(subcategory => {
+          const companiesInSubcategory = subcategory.companies.length;
+          const rowsNeeded = Math.ceil(companiesInSubcategory / cols);
+          totalHeight += subcategoryHeaderHeight + (rowsNeeded * itemHeight) + subcategorySpacing;
+        });
+      } else {
+        // Single subcategory - just calculate grid height
+        const rowsNeeded = Math.ceil(totalCompanies / cols);
+        totalHeight += rowsNeeded * itemHeight;
+      }
+      
+      totalHeight += padding;
+      
+      // Calculate area and check if this is the most efficient
+      const area = contentWidth * totalHeight;
+      if (area < minArea && contentWidth <= maxWidth) {
+        minArea = area;
+        bestConfig = { columns: cols, width: contentWidth, height: totalHeight };
       }
     }
     
-    // If user has manually set twoColumn, respect that unless it's clearly better to use optimal
-    if (customization.twoColumn && bestColumns <= 2) {
-      setOptimalColumns(2);
-    } else {
-      setOptimalColumns(bestColumns);
-    }
-  }, [category.subcategories, customization.width, customization.height, customization.size, customization.twoColumn]);
+    setOptimalColumns(bestConfig.columns);
+    setCalculatedDimensions({ width: bestConfig.width, height: bestConfig.height });
+    
+    // Update the store with calculated dimensions
+    updateCategoryCustomization(category.name, {
+      width: bestConfig.width,
+      height: bestConfig.height
+    });
+  }, [category.subcategories, customization.size, category.name, updateCategoryCustomization]);
 
   const handleMouseDown = (e: React.MouseEvent, direction: 'se' | 'e' | 's') => {
     e.preventDefault();
@@ -80,8 +104,8 @@ export default function ResizableCategory({
     setResizeDirection(direction);
     startMousePos.current = { x: e.clientX, y: e.clientY };
     startSize.current = { 
-      width: customization.width || 320, 
-      height: customization.height || 288 
+      width: customization.width || calculatedDimensions.width, 
+      height: customization.height || calculatedDimensions.height 
     };
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -145,7 +169,7 @@ export default function ResizableCategory({
   };
 
   const cycleColumns = () => {
-    const maxColumns = Math.min(6, Math.floor(((customization.width || 320) - 48) / 120));
+    const maxColumns = Math.min(6, Math.floor(((customization.width || calculatedDimensions.width) - 48) / 120));
     let nextColumns = optimalColumns + 1;
     if (nextColumns > maxColumns) {
       nextColumns = 1;
@@ -197,10 +221,9 @@ export default function ResizableCategory({
   const dynamicSizes = getDynamicSizes(customization.size);
   const columnsToUse = optimalColumns;
 
-  // Group all companies for display with subcategory grouping
-  const allCompanies = category.subcategories?.flatMap(sub => 
-    sub.companies.map(company => ({ ...company, subcategoryName: sub.name }))
-  ) || [];
+  // Use calculated dimensions or customization dimensions
+  const boxWidth = customization.width || calculatedDimensions.width;
+  const boxHeight = customization.height || calculatedDimensions.height;
 
   return (
     <div
@@ -214,8 +237,8 @@ export default function ResizableCategory({
         animationDelay: `${categoryIndex * 150}ms`,
         left: customization.position.x,
         top: customization.position.y,
-        width: customization.width || 320,
-        height: customization.height || 288,
+        width: boxWidth,
+        height: boxHeight,
         minWidth: '200px',
         minHeight: '150px'
       }}
@@ -320,7 +343,7 @@ export default function ResizableCategory({
                 gridTemplateColumns: `repeat(${columnsToUse}, 1fr)` 
               }}
             >
-              {allCompanies.map((company, companyIndex) => (
+              {category.subcategories?.[0]?.companies.map((company, companyIndex) => (
                 <div
                   key={company.id}
                   className={`bg-white/95 backdrop-blur-sm rounded-lg ${dynamicSizes.companyPadding} flex flex-col items-center text-center transform transition-all duration-200 hover:scale-105 hover:bg-white animate-fade-in`}
@@ -345,7 +368,7 @@ export default function ResizableCategory({
                     {company.company_name}
                   </span>
                 </div>
-              ))}
+              )) || []}
             </div>
           )}
         </div>
