@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { GripVertical, Columns2, Columns, Move } from 'lucide-react';
+import { GripVertical, Move } from 'lucide-react';
 import { useEcosystemStore } from '../lib/useEcosystemStore';
 import { Category, CategoryCustomization } from '../lib/types';
 
@@ -161,7 +161,7 @@ export default function ResizableCategory({
     switch (size) {
       case 'small': return { 
         titleFont: 'text-lg', 
-        subtitleFont: 'text-sm', 
+        subtitleFont: 'text-xs', 
         companyFont: 'text-xs', 
         logoSize: 'max-h-6 max-w-20',
         padding: 'p-4',
@@ -169,33 +169,38 @@ export default function ResizableCategory({
       };
       case 'medium': return { 
         titleFont: 'text-xl', 
-        subtitleFont: 'text-base', 
-        companyFont: 'text-sm', 
+        subtitleFont: 'text-sm', 
+        companyFont: 'text-xs', 
         logoSize: 'max-h-8 max-w-24',
         padding: 'p-6',
-        companyPadding: 'p-3'
+        companyPadding: 'p-2'
       };
       case 'large': return { 
         titleFont: 'text-2xl', 
-        subtitleFont: 'text-lg', 
-        companyFont: 'text-base', 
+        subtitleFont: 'text-base', 
+        companyFont: 'text-sm', 
         logoSize: 'max-h-10 max-w-28',
         padding: 'p-8',
-        companyPadding: 'p-4'
+        companyPadding: 'p-3'
       };
       default: return { 
         titleFont: 'text-xl', 
-        subtitleFont: 'text-base', 
-        companyFont: 'text-sm', 
+        subtitleFont: 'text-sm', 
+        companyFont: 'text-xs', 
         logoSize: 'max-h-8 max-w-24',
         padding: 'p-6',
-        companyPadding: 'p-3'
+        companyPadding: 'p-2'
       };
     }
   };
 
   const dynamicSizes = getDynamicSizes(customization.size);
   const columnsToUse = optimalColumns;
+
+  // Group all companies for display with subcategory grouping
+  const allCompanies = category.subcategories?.flatMap(sub => 
+    sub.companies.map(company => ({ ...company, subcategoryName: sub.name }))
+  ) || [];
 
   return (
     <div
@@ -234,65 +239,115 @@ export default function ResizableCategory({
       </div>
 
       <div className={`relative h-full flex flex-col ${dynamicSizes.padding}`}>
+        {/* Main Category Title */}
         <h3
-          className={`${dynamicSizes.titleFont} font-bold mb-4 text-center cursor-move`}
+          className={`${dynamicSizes.titleFont} font-bold mb-2 text-center cursor-move`}
           style={{ color: customization.textColor }}
         >
           {category.name}
         </h3>
         
+        {/* Category Subtitle */}
+        <h4
+          className={`${dynamicSizes.subtitleFont} font-semibold mb-4 text-center uppercase tracking-wide`}
+          style={{ color: customization.textColor, opacity: 0.8 }}
+        >
+          {category.name.toUpperCase()}
+        </h4>
+        
         <div 
           ref={contentRef}
           className="flex-1 overflow-hidden"
         >
-          {category.subcategories?.map((subcategory, subcategoryIndex) => (
-            <div
-              key={subcategory.name}
-              className="mb-4 animate-fade-in"
-              style={{ animationDelay: `${(categoryIndex * 150) + (subcategoryIndex * 100)}ms` }}
-            >
-              <h4
-                className={`${dynamicSizes.subtitleFont} font-semibold mb-3 text-center uppercase tracking-wide`}
-                style={{ color: customization.textColor, opacity: 0.8 }}
-              >
-                {subcategory.name}
-              </h4>
-              
-              <div 
-                className={`grid gap-2`}
-                style={{ 
-                  gridTemplateColumns: `repeat(${columnsToUse}, 1fr)` 
-                }}
-              >
-                {subcategory.companies.map((company, companyIndex) => (
-                  <div
-                    key={company.id}
-                    className={`bg-white/95 backdrop-blur-sm rounded-lg ${dynamicSizes.companyPadding} flex flex-col items-center text-center transform transition-all duration-200 hover:scale-105 hover:bg-white animate-fade-in`}
-                    style={{ animationDelay: `${(categoryIndex * 150) + (subcategoryIndex * 100) + (companyIndex * 50)}ms` }}
+          {/* Show subcategories as grouped sections if they exist, otherwise show all companies */}
+          {category.subcategories && category.subcategories.length > 1 ? (
+            // Multiple subcategories - show them as organized sections
+            <div className="space-y-4">
+              {category.subcategories.map((subcategory, subcategoryIndex) => (
+                <div
+                  key={subcategory.name}
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${(categoryIndex * 150) + (subcategoryIndex * 100)}ms` }}
+                >
+                  <h5
+                    className={`${dynamicSizes.subtitleFont} font-medium mb-2 text-left`}
+                    style={{ color: customization.textColor, opacity: 0.7 }}
                   >
-                    {company.logoUrl ? (
-                      <div className="mb-2 p-1 bg-white rounded-md shadow-sm">
-                        <img
-                          src={company.logoUrl}
-                          alt={company.company_name}
-                          className={`${dynamicSizes.logoSize} object-contain`}
-                        />
-                      </div>
-                    ) : (
-                      <div className={`mb-2 ${customization.size === 'small' ? 'w-6 h-6' : customization.size === 'large' ? 'w-10 h-10' : 'w-8 h-8'} bg-gradient-to-br from-gray-200 to-gray-300 rounded-md flex items-center justify-center`}>
-                        <span className={`${customization.size === 'small' ? 'text-xs' : customization.size === 'large' ? 'text-base' : 'text-sm'} font-semibold text-gray-600`}>
-                          {company.company_name.charAt(0)}
+                    {subcategory.name}
+                  </h5>
+                  
+                  <div 
+                    className={`grid gap-2 mb-3`}
+                    style={{ 
+                      gridTemplateColumns: `repeat(${columnsToUse}, 1fr)` 
+                    }}
+                  >
+                    {subcategory.companies.map((company, companyIndex) => (
+                      <div
+                        key={company.id}
+                        className={`bg-white/95 backdrop-blur-sm rounded-lg ${dynamicSizes.companyPadding} flex flex-col items-center text-center transform transition-all duration-200 hover:scale-105 hover:bg-white animate-fade-in`}
+                        style={{ animationDelay: `${(categoryIndex * 150) + (subcategoryIndex * 100) + (companyIndex * 50)}ms` }}
+                      >
+                        {company.logoUrl ? (
+                          <div className="mb-1 p-1 bg-white rounded-md shadow-sm">
+                            <img
+                              src={company.logoUrl}
+                              alt={company.company_name}
+                              className={`${dynamicSizes.logoSize} object-contain`}
+                            />
+                          </div>
+                        ) : (
+                          <div className={`mb-1 ${customization.size === 'small' ? 'w-6 h-6' : customization.size === 'large' ? 'w-10 h-10' : 'w-8 h-8'} bg-gradient-to-br from-gray-200 to-gray-300 rounded-md flex items-center justify-center`}>
+                            <span className={`${customization.size === 'small' ? 'text-xs' : customization.size === 'large' ? 'text-base' : 'text-sm'} font-semibold text-gray-600`}>
+                              {company.company_name.charAt(0)}
+                            </span>
+                          </div>
+                        )}
+                        <span className={`${dynamicSizes.companyFont} font-medium text-gray-800 leading-tight text-center`}>
+                          {company.company_name}
                         </span>
                       </div>
-                    )}
-                    <span className={`${dynamicSizes.companyFont} font-medium text-gray-800 leading-tight text-center`}>
-                      {company.company_name}
-                    </span>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-          ))}
+          ) : (
+            // Single subcategory or no subcategories - show all companies in a grid
+            <div 
+              className={`grid gap-2`}
+              style={{ 
+                gridTemplateColumns: `repeat(${columnsToUse}, 1fr)` 
+              }}
+            >
+              {allCompanies.map((company, companyIndex) => (
+                <div
+                  key={company.id}
+                  className={`bg-white/95 backdrop-blur-sm rounded-lg ${dynamicSizes.companyPadding} flex flex-col items-center text-center transform transition-all duration-200 hover:scale-105 hover:bg-white animate-fade-in`}
+                  style={{ animationDelay: `${(categoryIndex * 150) + (companyIndex * 50)}ms` }}
+                >
+                  {company.logoUrl ? (
+                    <div className="mb-1 p-1 bg-white rounded-md shadow-sm">
+                      <img
+                        src={company.logoUrl}
+                        alt={company.company_name}
+                        className={`${dynamicSizes.logoSize} object-contain`}
+                      />
+                    </div>
+                  ) : (
+                    <div className={`mb-1 ${customization.size === 'small' ? 'w-6 h-6' : customization.size === 'large' ? 'w-10 h-10' : 'w-8 h-8'} bg-gradient-to-br from-gray-200 to-gray-300 rounded-md flex items-center justify-center`}>
+                      <span className={`${customization.size === 'small' ? 'text-xs' : customization.size === 'large' ? 'text-base' : 'text-sm'} font-semibold text-gray-600`}>
+                        {company.company_name.charAt(0)}
+                      </span>
+                    </div>
+                  )}
+                  <span className={`${dynamicSizes.companyFont} font-medium text-gray-800 leading-tight text-center`}>
+                    {company.company_name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
       
