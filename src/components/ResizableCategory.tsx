@@ -21,22 +21,20 @@ export default function ResizableCategory({
   const [isDragging, setIsDragging] = useState(false);
   const [resizeDirection, setResizeDirection] = useState<'se' | 'e' | 's' | null>(null);
   const categoryRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
   const startMousePos = useRef({ x: 0, y: 0 });
   const startSize = useRef({ width: 0, height: 0 });
   const startPosition = useRef({ x: 0, y: 0 });
   const [optimalColumns, setOptimalColumns] = useState(2);
-  const [calculatedDimensions, setCalculatedDimensions] = useState({ width: 320, height: 288 });
 
-  // Calculate optimal dimensions and columns to show all content
+  // Calculate optimal dimensions and columns to show all content without scrolling
   useEffect(() => {
-    if (!category.subcategories) return;
+    if (!category.subcategories || category.subcategories.length === 0) return;
     
     const totalCompanies = category.subcategories.reduce((total, sub) => total + sub.companies.length, 0);
     
     if (totalCompanies === 0) {
       setOptimalColumns(1);
-      setCalculatedDimensions({ width: 320, height: 200 });
+      updateCategoryCustomization(category.name, { width: 320, height: 200 });
       return;
     }
 
@@ -45,23 +43,19 @@ export default function ResizableCategory({
     const itemWidth = 120;
     const padding = customization.size === 'small' ? 32 : customization.size === 'large' ? 64 : 48;
     const headerHeight = customization.size === 'small' ? 80 : customization.size === 'large' ? 120 : 100;
-    
-    // Calculate subcategory header heights
     const subcategoryHeaderHeight = customization.size === 'small' ? 24 : customization.size === 'large' ? 32 : 28;
     const subcategorySpacing = 16;
     
-    // Calculate minimum width needed
-    const minWidth = Math.max(200, itemWidth * 2 + padding);
-    const maxWidth = itemWidth * 6 + padding;
+    // Calculate minimum and maximum columns based on total companies
+    const minColumns = 1;
+    const maxColumns = Math.min(6, totalCompanies);
     
-    let bestConfig = { columns: 1, width: minWidth, height: 200 };
+    let bestConfig = { columns: 1, width: 320, height: 200 };
     let minArea = Infinity;
     
     // Try different column configurations to find the most space-efficient layout
-    for (let cols = 1; cols <= 6; cols++) {
-      const contentWidth = cols * itemWidth + padding;
-      
-      // Calculate height needed for this column configuration
+    for (let cols = minColumns; cols <= maxColumns; cols++) {
+      const contentWidth = Math.max(320, cols * itemWidth + padding);
       let totalHeight = headerHeight;
       
       if (category.subcategories.length > 1) {
@@ -81,21 +75,25 @@ export default function ResizableCategory({
       
       // Calculate area and check if this is the most efficient
       const area = contentWidth * totalHeight;
-      if (area < minArea && contentWidth <= maxWidth) {
+      if (area < minArea) {
         minArea = area;
         bestConfig = { columns: cols, width: contentWidth, height: totalHeight };
       }
     }
     
     setOptimalColumns(bestConfig.columns);
-    setCalculatedDimensions({ width: bestConfig.width, height: bestConfig.height });
     
-    // Update the store with calculated dimensions
-    updateCategoryCustomization(category.name, {
-      width: bestConfig.width,
-      height: bestConfig.height
-    });
-  }, [category.subcategories, customization.size, category.name, updateCategoryCustomization]);
+    // Only update dimensions if they're significantly different to avoid constant updates
+    const currentWidth = customization.width || 320;
+    const currentHeight = customization.height || 200;
+    
+    if (Math.abs(currentWidth - bestConfig.width) > 20 || Math.abs(currentHeight - bestConfig.height) > 20) {
+      updateCategoryCustomization(category.name, {
+        width: bestConfig.width,
+        height: bestConfig.height
+      });
+    }
+  }, [category.subcategories, customization.size, category.name, updateCategoryCustomization, customization.width, customization.height]);
 
   const handleMouseDown = (e: React.MouseEvent, direction: 'se' | 'e' | 's') => {
     e.preventDefault();
@@ -104,8 +102,8 @@ export default function ResizableCategory({
     setResizeDirection(direction);
     startMousePos.current = { x: e.clientX, y: e.clientY };
     startSize.current = { 
-      width: customization.width || calculatedDimensions.width, 
-      height: customization.height || calculatedDimensions.height 
+      width: customization.width || 320, 
+      height: customization.height || 200 
     };
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -116,10 +114,10 @@ export default function ResizableCategory({
       let newHeight = startSize.current.height;
 
       if (direction === 'se' || direction === 'e') {
-        newWidth = Math.max(200, startSize.current.width + deltaX);
+        newWidth = Math.max(320, startSize.current.width + deltaX);
       }
       if (direction === 'se' || direction === 's') {
-        newHeight = Math.max(150, startSize.current.height + deltaY);
+        newHeight = Math.max(200, startSize.current.height + deltaY);
       }
 
       updateCategoryCustomization(category.name, {
@@ -150,8 +148,8 @@ export default function ResizableCategory({
       const deltaX = e.clientX - startMousePos.current.x;
       const deltaY = e.clientY - startMousePos.current.y;
       
-      const newX = startPosition.current.x + deltaX;
-      const newY = startPosition.current.y + deltaY;
+      const newX = Math.max(0, startPosition.current.x + deltaX);
+      const newY = Math.max(0, startPosition.current.y + deltaY);
 
       updateCategoryCustomization(category.name, {
         position: { x: newX, y: newY }
@@ -169,16 +167,13 @@ export default function ResizableCategory({
   };
 
   const cycleColumns = () => {
-    const maxColumns = Math.min(6, Math.floor(((customization.width || calculatedDimensions.width) - 48) / 120));
+    const totalCompanies = category.subcategories?.reduce((total, sub) => total + sub.companies.length, 0) || 0;
+    const maxColumns = Math.min(6, totalCompanies);
     let nextColumns = optimalColumns + 1;
     if (nextColumns > maxColumns) {
       nextColumns = 1;
     }
     setOptimalColumns(nextColumns);
-    
-    updateCategoryCustomization(category.name, {
-      twoColumn: nextColumns === 2
-    });
   };
 
   const getDynamicSizes = (size: 'small' | 'medium' | 'large') => {
@@ -219,11 +214,8 @@ export default function ResizableCategory({
   };
 
   const dynamicSizes = getDynamicSizes(customization.size);
-  const columnsToUse = optimalColumns;
-
-  // Use calculated dimensions or customization dimensions
-  const boxWidth = customization.width || calculatedDimensions.width;
-  const boxHeight = customization.height || calculatedDimensions.height;
+  const boxWidth = customization.width || 320;
+  const boxHeight = customization.height || 200;
 
   return (
     <div
@@ -239,8 +231,8 @@ export default function ResizableCategory({
         top: customization.position.y,
         width: boxWidth,
         height: boxHeight,
-        minWidth: '200px',
-        minHeight: '150px'
+        minWidth: '320px',
+        minHeight: '200px'
       }}
       onMouseDown={handleDragStart}
     >
@@ -252,19 +244,19 @@ export default function ResizableCategory({
           onMouseDown={(e) => e.stopPropagation()}
           onClick={cycleColumns}
           className="p-1 bg-white/20 rounded hover:bg-white/30 transition-colors"
-          title={`Switch to ${columnsToUse === 1 ? '2' : columnsToUse + 1} columns`}
+          title={`${optimalColumns} columns - click to change`}
         >
-          <span className="text-xs font-bold text-white">{columnsToUse}</span>
+          <span className="text-xs font-bold text-white">{optimalColumns}</span>
         </button>
         <div className="p-1 bg-white/20 rounded">
           <Move className="h-3 w-3 text-white" />
         </div>
       </div>
 
-      <div className={`relative h-full flex flex-col ${dynamicSizes.padding}`}>
+      <div className={`relative h-full flex flex-col ${dynamicSizes.padding} overflow-hidden`}>
         {/* Main Category Title */}
         <h3
-          className={`${dynamicSizes.titleFont} font-bold mb-2 text-center cursor-move`}
+          className={`${dynamicSizes.titleFont} font-bold mb-2 text-center cursor-move flex-shrink-0`}
           style={{ color: customization.textColor }}
         >
           {category.name}
@@ -272,20 +264,17 @@ export default function ResizableCategory({
         
         {/* Category Subtitle */}
         <h4
-          className={`${dynamicSizes.subtitleFont} font-semibold mb-4 text-center uppercase tracking-wide`}
+          className={`${dynamicSizes.subtitleFont} font-semibold mb-4 text-center uppercase tracking-wide flex-shrink-0`}
           style={{ color: customization.textColor, opacity: 0.8 }}
         >
           {category.name.toUpperCase()}
         </h4>
         
-        <div 
-          ref={contentRef}
-          className="flex-1 overflow-hidden"
-        >
+        <div className="flex-1 overflow-hidden">
           {/* Show subcategories as grouped sections if they exist, otherwise show all companies */}
           {category.subcategories && category.subcategories.length > 1 ? (
             // Multiple subcategories - show them as organized sections
-            <div className="space-y-4">
+            <div className="space-y-4 h-full overflow-y-auto">
               {category.subcategories.map((subcategory, subcategoryIndex) => (
                 <div
                   key={subcategory.name}
@@ -293,7 +282,7 @@ export default function ResizableCategory({
                   style={{ animationDelay: `${(categoryIndex * 150) + (subcategoryIndex * 100)}ms` }}
                 >
                   <h5
-                    className={`${dynamicSizes.subtitleFont} font-medium mb-2 text-left`}
+                    className={`${dynamicSizes.subtitleFont} font-medium mb-2 text-left flex-shrink-0`}
                     style={{ color: customization.textColor, opacity: 0.7 }}
                   >
                     {subcategory.name}
@@ -302,7 +291,7 @@ export default function ResizableCategory({
                   <div 
                     className={`grid gap-2 mb-3`}
                     style={{ 
-                      gridTemplateColumns: `repeat(${columnsToUse}, 1fr)` 
+                      gridTemplateColumns: `repeat(${optimalColumns}, 1fr)` 
                     }}
                   >
                     {subcategory.companies.map((company, companyIndex) => (
@@ -312,7 +301,7 @@ export default function ResizableCategory({
                         style={{ animationDelay: `${(categoryIndex * 150) + (subcategoryIndex * 100) + (companyIndex * 50)}ms` }}
                       >
                         {company.logoUrl ? (
-                          <div className="mb-1 p-1 bg-white rounded-md shadow-sm">
+                          <div className="mb-1 p-1 bg-white rounded-md shadow-sm flex-shrink-0">
                             <img
                               src={company.logoUrl}
                               alt={company.company_name}
@@ -320,7 +309,7 @@ export default function ResizableCategory({
                             />
                           </div>
                         ) : (
-                          <div className={`mb-1 ${customization.size === 'small' ? 'w-6 h-6' : customization.size === 'large' ? 'w-10 h-10' : 'w-8 h-8'} bg-gradient-to-br from-gray-200 to-gray-300 rounded-md flex items-center justify-center`}>
+                          <div className={`mb-1 ${customization.size === 'small' ? 'w-6 h-6' : customization.size === 'large' ? 'w-10 h-10' : 'w-8 h-8'} bg-gradient-to-br from-gray-200 to-gray-300 rounded-md flex items-center justify-center flex-shrink-0`}>
                             <span className={`${customization.size === 'small' ? 'text-xs' : customization.size === 'large' ? 'text-base' : 'text-sm'} font-semibold text-gray-600`}>
                               {company.company_name.charAt(0)}
                             </span>
@@ -338,9 +327,10 @@ export default function ResizableCategory({
           ) : (
             // Single subcategory or no subcategories - show all companies in a grid
             <div 
-              className={`grid gap-2`}
+              className={`grid gap-2 h-full`}
               style={{ 
-                gridTemplateColumns: `repeat(${columnsToUse}, 1fr)` 
+                gridTemplateColumns: `repeat(${optimalColumns}, 1fr)`,
+                gridAutoRows: 'min-content'
               }}
             >
               {category.subcategories?.[0]?.companies.map((company, companyIndex) => (
@@ -350,7 +340,7 @@ export default function ResizableCategory({
                   style={{ animationDelay: `${(categoryIndex * 150) + (companyIndex * 50)}ms` }}
                 >
                   {company.logoUrl ? (
-                    <div className="mb-1 p-1 bg-white rounded-md shadow-sm">
+                    <div className="mb-1 p-1 bg-white rounded-md shadow-sm flex-shrink-0">
                       <img
                         src={company.logoUrl}
                         alt={company.company_name}
@@ -358,7 +348,7 @@ export default function ResizableCategory({
                       />
                     </div>
                   ) : (
-                    <div className={`mb-1 ${customization.size === 'small' ? 'w-6 h-6' : customization.size === 'large' ? 'w-10 h-10' : 'w-8 h-8'} bg-gradient-to-br from-gray-200 to-gray-300 rounded-md flex items-center justify-center`}>
+                    <div className={`mb-1 ${customization.size === 'small' ? 'w-6 h-6' : customization.size === 'large' ? 'w-10 h-10' : 'w-8 h-8'} bg-gradient-to-br from-gray-200 to-gray-300 rounded-md flex items-center justify-center flex-shrink-0`}>
                       <span className={`${customization.size === 'small' ? 'text-xs' : customization.size === 'large' ? 'text-base' : 'text-sm'} font-semibold text-gray-600`}>
                         {company.company_name.charAt(0)}
                       </span>

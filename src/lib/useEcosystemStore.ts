@@ -164,18 +164,75 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
         const existingCustomization = chartCustomization.categories[name];
         const defaultColor = colorFromString(name);
 
-        // Calculate grid-based positioning with proper spacing
-        const boxWidth = 360; // Standard box width + margin
-        const boxHeight = 350; // Standard box height + margin
-        const canvasWidth = 1200; // Approximate canvas width
-        const columnsPerRow = Math.floor(canvasWidth / boxWidth);
+        // Calculate optimal dimensions first
+        const totalCompanies = allCompanies.length;
+        let optimalWidth = 320;
+        let optimalHeight = 250;
+        
+        if (totalCompanies > 0) {
+          // Try different column configurations to find the most efficient layout
+          const itemWidth = 120;
+          const itemHeight = 68;
+          const padding = 48;
+          const headerHeight = 100;
+          const subcategoryHeaderHeight = 28;
+          const subcategorySpacing = 16;
+          
+          let bestArea = Infinity;
+          
+          for (let cols = 1; cols <= Math.min(6, totalCompanies); cols++) {
+            const contentWidth = cols * itemWidth + padding;
+            let totalHeight = headerHeight;
+            
+            if (subcategories.length > 1) {
+              subcategories.forEach(subcategory => {
+                const companiesInSubcategory = subcategory.companies.length;
+                const rowsNeeded = Math.ceil(companiesInSubcategory / cols);
+                totalHeight += subcategoryHeaderHeight + (rowsNeeded * itemHeight) + subcategorySpacing;
+              });
+            } else {
+              const rowsNeeded = Math.ceil(totalCompanies / cols);
+              totalHeight += rowsNeeded * itemHeight;
+            }
+            
+            totalHeight += padding;
+            const area = contentWidth * totalHeight;
+            
+            if (area < bestArea) {
+              bestArea = area;
+              optimalWidth = contentWidth;
+              optimalHeight = totalHeight;
+            }
+          }
+        }
+
+        // Calculate grid-based positioning with dynamic spacing based on box sizes
+        const margin = 40;
+        const canvasWidth = 1200;
+        
+        // Calculate how many boxes can fit per row based on their width
+        const boxWidthWithMargin = optimalWidth + margin;
+        const columnsPerRow = Math.max(1, Math.floor((canvasWidth - margin) / boxWidthWithMargin));
         
         const row = Math.floor(categoryIndex / columnsPerRow);
         const col = categoryIndex % columnsPerRow;
         
+        // Use dynamic heights for vertical positioning
+        let yOffset = margin;
+        
+        // Calculate Y position based on previous boxes in the same column
+        for (let prevIndex = col; prevIndex < categoryIndex; prevIndex += columnsPerRow) {
+          const prevCategory = Array.from(categoryMap.keys())[prevIndex];
+          if (prevCategory && chartCustomization.categories[prevCategory]) {
+            yOffset += (chartCustomization.categories[prevCategory].height || 250) + margin;
+          } else {
+            yOffset += 250 + margin; // Default height estimate
+          }
+        }
+        
         const defaultPosition = {
-          x: col * boxWidth + 40, // 40px left margin
-          y: row * boxHeight + 40  // 40px top margin
+          x: col * boxWidthWithMargin + margin,
+          y: yOffset
         };
 
         return {
@@ -189,8 +246,8 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
             textColor: getContrastColor(defaultColor),
             size: 'medium' as const,
             position: defaultPosition,
-            width: 320,
-            height: 288,
+            width: optimalWidth,
+            height: optimalHeight,
             twoColumn: false
           }
         };
