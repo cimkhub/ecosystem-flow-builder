@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useRef, useState } from 'react';
@@ -57,29 +56,19 @@ export default function EcosystemChart() {
 
   // Calculate canvas size for professional layout
   const calculateCanvasSize = () => {
-    const categoryCount = categories.length;
-    let cols = 3; // Default to 3 columns
+    if (categories.length === 0) {
+      return { width: 1200, height: 800 };
+    }
+    const PADDING = 40;
     
-    if (categoryCount <= 2) cols = 2;
-    else if (categoryCount <= 6) cols = 3;
-    else if (categoryCount <= 12) cols = 4;
-    else cols = Math.min(5, Math.ceil(Math.sqrt(categoryCount)));
-    
-    const rows = Math.ceil(categoryCount / cols);
-    
-    // Professional layout dimensions
-    const CATEGORY_WIDTH = 380;
-    const CATEGORY_HEIGHT = 450;
-    const HORIZONTAL_GAP = 40;
-    const VERTICAL_GAP = 40;
-    const CANVAS_PADDING = 60;
-    
-    const width = (2 * CANVAS_PADDING) + (cols * CATEGORY_WIDTH) + ((cols - 1) * HORIZONTAL_GAP);
-    const height = (2 * CANVAS_PADDING) + (rows * CATEGORY_HEIGHT) + ((rows - 1) * VERTICAL_GAP);
+    const allCustomizations = categories.map(c => c.customization);
+
+    const width = Math.max(...allCustomizations.map(c => (c.position.x || 0) + (c.width || 0))) + PADDING;
+    const height = Math.max(...allCustomizations.map(c => (c.position.y || 0) + (c.height || 0))) + PADDING;
     
     return { 
-      width: Math.max(width, 1400), 
-      height: Math.max(height, 900) 
+      width: Math.max(width, 1100),
+      height: Math.max(height, 800)
     };
   };
 
@@ -120,7 +109,7 @@ export default function EcosystemChart() {
         </div>
       </div>
 
-      <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+      <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-xl border border-gray-100">
         {/* Professional Header Design */}
         <div className="relative text-center py-16 px-8 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 via-blue-600/10 to-cyan-600/10"></div>
@@ -144,41 +133,36 @@ export default function EcosystemChart() {
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent"></div>
         </div>
 
-        {/* Wrapper to allow horizontal scrolling for the chart */}
-        <div className="overflow-x-auto">
-          {/* Professional Chart Content */}
-          <div
-            ref={chartRef}
-            className="relative bg-white overflow-hidden"
-            style={{ 
-              width: canvasSize.width,
-              height: canvasSize.height,
-              minWidth: '1400px',
-              minHeight: '900px'
-            }}
-          >
-            {categories.map((category, categoryIndex) => {
-              const customization = chartCustomization.categories[category.name] || category.customization || {
-                backgroundColor: category.color,
-                borderColor: category.color,
-                textColor: getContrastColor(category.color),
-                size: 'medium' as const,
-                position: { x: 60, y: 60 },
-                width: 380,
-                height: 450,
-                twoColumn: false
-              };
-              
-              return (
-                <ResizableCategory
-                  key={category.name}
-                  category={category}
-                  customization={customization}
-                  categoryIndex={categoryIndex}
-                />
-              );
-            })}
-          </div>
+        {/* Professional Chart Content */}
+        <div
+          ref={chartRef}
+          className="relative bg-white mx-auto"
+          style={{ 
+            width: canvasSize.width,
+            height: canvasSize.height,
+          }}
+        >
+          {categories.map((category, categoryIndex) => {
+            const customization = chartCustomization.categories[category.name] || category.customization || {
+              backgroundColor: category.color,
+              borderColor: category.color,
+              textColor: getContrastColor(category.color),
+              size: 'medium' as const,
+              position: { x: 60, y: 60 },
+              width: 320,
+              height: 400,
+              twoColumn: false
+            };
+            
+            return (
+              <ResizableCategory
+                key={category.name}
+                category={category}
+                customization={customization}
+                categoryIndex={categoryIndex}
+              />
+            );
+          })}
         </div>
       </div>
 

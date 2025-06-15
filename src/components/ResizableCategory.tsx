@@ -245,7 +245,7 @@ export default function ResizableCategory({
           {category.name.toUpperCase()}
         </h4>
         
-        <div className="flex-1 overflow-y-auto pr-2 -mr-2">
+        <div className="flex-1">
           {/* Show subcategories as grouped sections if they exist, otherwise show all companies */}
           {category.subcategories && category.subcategories.length > 1 ? (
             // Multiple subcategories - show them as organized sections

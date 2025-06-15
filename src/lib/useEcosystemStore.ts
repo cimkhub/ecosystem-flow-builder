@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { EcosystemState, Company, Category, RawDataRow, ColumnMapping, ChartCustomization, CategoryCustomization } from './types';
 import { colorFromString, getContrastColor } from './colorFromString';
@@ -175,61 +174,98 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
             textColor: getContrastColor(defaultColor),
             size: 'medium' as const,
             position: { x: 0, y: 0 },
-            width: 380,
-            height: 450,
+            width: 320,
+            height: 400,
             twoColumn: false
           }
         };
       })
       .sort((a, b) => a.name.localeCompare(b.name));
 
-    // PROFESSIONAL GRID LAYOUT - Based on reference screenshot
+    // PROFESSIONAL GRID LAYOUT - DYNAMIC & COMPACT
     if (categories.length > 0) {
       const updatedChartCustomization = { ...chartCustomization };
       
-      // Professional layout parameters
-      const CATEGORY_WIDTH = 380;
-      const CATEGORY_HEIGHT = 450;
-      const HORIZONTAL_GAP = 40;
+      const CATEGORY_WIDTH = 320;
+      const HORIZONTAL_GAP = 24;
       const VERTICAL_GAP = 40;
-      const CANVAS_PADDING = 60;
+      const CANVAS_PADDING = 40;
+
+      const calculateCategoryHeight = (category: Category) => {
+        const HEADER_H = 120;
+        const SUBCAT_HEADER_H = 36;
+        const SUBCAT_SPACING_Y = 16;
+        const ITEM_H = 76;
+        const ITEM_GAP_Y = 8;
+        
+        let contentHeight = 0;
+        const totalCompanies = category.companies.length;
+        let logoColumns = 1;
+        if (totalCompanies > 3) logoColumns = 2;
+        if (totalCompanies > 8) logoColumns = 3;
+
+        if (category.subcategories && category.subcategories.length > 1) {
+          category.subcategories.forEach(subcategory => {
+            const rowsNeeded = Math.ceil(subcategory.companies.length / logoColumns);
+            contentHeight += SUBCAT_HEADER_H;
+            if (rowsNeeded > 0) {
+              contentHeight += (rowsNeeded * ITEM_H) + (Math.max(0, rowsNeeded - 1) * ITEM_GAP_Y);
+            }
+          });
+          contentHeight += (category.subcategories.length - 1) * SUBCAT_SPACING_Y;
+        } else if (totalCompanies > 0) {
+          const rowsNeeded = Math.ceil(totalCompanies / logoColumns);
+           if (rowsNeeded > 0) {
+            contentHeight += (rowsNeeded * ITEM_H) + (Math.max(0, rowsNeeded - 1) * ITEM_GAP_Y);
+          }
+        }
+        
+        return Math.max(250, HEADER_H + contentHeight);
+      };
       
-      // Calculate optimal grid based on category count
+      const categoryHeights = categories.map(category => calculateCategoryHeight(category));
+      
       const categoryCount = categories.length;
-      let cols = 3; // Default to 3 columns like the reference
-      
+      let cols = 3;
       if (categoryCount <= 2) cols = 2;
       else if (categoryCount <= 6) cols = 3;
       else if (categoryCount <= 12) cols = 4;
       else cols = Math.min(5, Math.ceil(Math.sqrt(categoryCount)));
       
-      const rows = Math.ceil(categoryCount / cols);
+      const rowHeights: number[] = [];
+      for (let i = 0; i < Math.ceil(categoryCount / cols); i++) {
+        const rowSlice = categoryHeights.slice(i * cols, (i * cols) + cols);
+        if (rowSlice.length > 0) {
+          rowHeights.push(Math.max(...rowSlice));
+        }
+      }
       
-      console.log(`Professional Grid Layout: ${cols} columns × ${rows} rows for ${categoryCount} categories`);
-      
-      // Position categories in perfect grid
+      const rowYOffsets = [CANVAS_PADDING];
+      for (let i = 0; i < rowHeights.length - 1; i++) {
+        rowYOffsets.push(rowYOffsets[i] + rowHeights[i] + VERTICAL_GAP);
+      }
+
       categories.forEach((category, index) => {
         const row = Math.floor(index / cols);
         const col = index % cols;
         
         const x = CANVAS_PADDING + (col * (CATEGORY_WIDTH + HORIZONTAL_GAP));
-        const y = CANVAS_PADDING + (row * (CATEGORY_HEIGHT + VERTICAL_GAP));
+        const y = rowYOffsets[row];
         
         const categoryCustomization: CategoryCustomization = {
+          ...category.customization,
           backgroundColor: category.customization?.backgroundColor || category.color,
           borderColor: category.customization?.borderColor || category.color,
           textColor: category.customization?.textColor || getContrastColor(category.color),
           size: 'medium',
           position: { x, y },
           width: CATEGORY_WIDTH,
-          height: CATEGORY_HEIGHT,
+          height: categoryHeights[index],
           twoColumn: false
         };
         
         category.customization = categoryCustomization;
         updatedChartCustomization.categories[category.name] = categoryCustomization;
-        
-        console.log(`"${category.name}" positioned at (${x}, ${y}) - Grid: col ${col}, row ${row}`);
       });
 
       set({ 
