@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ArrowRight, CheckCircle2, Settings, MapPin } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Settings, MapPin, ArrowLeft } from 'lucide-react';
 import { useEcosystemStore } from '../lib/useEcosystemStore';
 import { ColumnMapping } from '../lib/types';
 
@@ -156,9 +156,10 @@ export default function ColumnMapper({ onMappingComplete }: ColumnMapperProps) {
         <div className="mt-8 flex justify-between items-center">
           <button
             onClick={() => setShowColumnMapper(false)}
-            className="px-6 py-3 text-gray-600 hover:text-gray-800 transition-colors"
+            className="flex items-center space-x-2 px-6 py-3 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl text-gray-600 hover:text-gray-800 hover:bg-white hover:border-gray-300 transition-all duration-200 shadow-sm hover:shadow-md group"
           >
-            Back to Upload
+            <ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" />
+            <span className="font-medium">Back to Upload</span>
           </button>
           
           <button
