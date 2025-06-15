@@ -2,13 +2,12 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
-import { Download, Share2, Sparkles, Settings2, GripVertical, Columns2 } from 'lucide-react';
+import { Download, Share2, Sparkles, Settings2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { useEcosystemStore } from '../lib/useEcosystemStore';
 import { getContrastColor } from '../lib/colorFromString';
 import ChartCustomizationPanel from './ChartCustomizationPanel';
 import ResizableCategory from './ResizableCategory';
-import { ScrollArea } from './ui/scroll-area';
 
 export default function EcosystemChart() {
   const { categories, chartCustomization } = useEcosystemStore();
@@ -115,34 +114,36 @@ export default function EcosystemChart() {
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent"></div>
         </div>
 
-        {/* Chart Content with much more spacing */}
+        {/* Chart Content with absolute positioning for free movement */}
         <div
           ref={chartRef}
-          className="p-16"
+          className="relative bg-white"
+          style={{ minHeight: '800px', height: '1200px' }}
         >
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-20 justify-items-center">
-            {categories.map((category, categoryIndex) => {
-              const customization = chartCustomization.categories[category.name] || {
-                backgroundColor: category.color,
-                borderColor: category.color,
-                textColor: getContrastColor(category.color),
-                size: 'medium' as const,
-                position: { x: 0, y: 0 },
-                width: 320,
-                height: 288,
-                twoColumn: false
-              };
-              
-              return (
-                <ResizableCategory
-                  key={category.name}
-                  category={category}
-                  customization={customization}
-                  categoryIndex={categoryIndex}
-                />
-              );
-            })}
-          </div>
+          {categories.map((category, categoryIndex) => {
+            const customization = chartCustomization.categories[category.name] || {
+              backgroundColor: category.color,
+              borderColor: category.color,
+              textColor: getContrastColor(category.color),
+              size: 'medium' as const,
+              position: { 
+                x: (categoryIndex % 3) * 380 + 50, 
+                y: Math.floor(categoryIndex / 3) * 350 + 50 
+              },
+              width: 320,
+              height: 288,
+              twoColumn: false
+            };
+            
+            return (
+              <ResizableCategory
+                key={category.name}
+                category={category}
+                customization={customization}
+                categoryIndex={categoryIndex}
+              />
+            );
+          })}
         </div>
       </div>
 
