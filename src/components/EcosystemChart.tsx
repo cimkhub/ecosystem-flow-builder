@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useRef, useState } from 'react';
@@ -54,43 +55,45 @@ export default function EcosystemChart() {
     );
   }
 
-  // Calculate canvas size based on the new structured layout
+  // Calculate canvas size for professional layout
   const calculateCanvasSize = () => {
-    let maxX = 1600; // Updated minimum width
-    let maxY = 1200; // Updated minimum height
+    const categoryCount = categories.length;
+    let cols = 3; // Default to 3 columns
     
-    categories.forEach(category => {
-      const customization = chartCustomization.categories[category.name] || category.customization;
-      if (customization && customization.position) {
-        const rightEdge = customization.position.x + (customization.width || 340);
-        const bottomEdge = customization.position.y + (customization.height || 300);
-        maxX = Math.max(maxX, rightEdge + 60); // 60px margin
-        maxY = Math.max(maxY, bottomEdge + 60); // 60px margin
-      }
-    });
+    if (categoryCount <= 2) cols = 2;
+    else if (categoryCount <= 6) cols = 3;
+    else if (categoryCount <= 12) cols = 4;
+    else cols = Math.min(5, Math.ceil(Math.sqrt(categoryCount)));
     
-    return { width: maxX, height: maxY };
+    const rows = Math.ceil(categoryCount / cols);
+    
+    // Professional layout dimensions
+    const CATEGORY_WIDTH = 380;
+    const CATEGORY_HEIGHT = 450;
+    const HORIZONTAL_GAP = 40;
+    const VERTICAL_GAP = 40;
+    const CANVAS_PADDING = 60;
+    
+    const width = (2 * CANVAS_PADDING) + (cols * CATEGORY_WIDTH) + ((cols - 1) * HORIZONTAL_GAP);
+    const height = (2 * CANVAS_PADDING) + (rows * CATEGORY_HEIGHT) + ((rows - 1) * VERTICAL_GAP);
+    
+    return { 
+      width: Math.max(width, 1400), 
+      height: Math.max(height, 900) 
+    };
   };
 
   const canvasSize = calculateCanvasSize();
 
-  console.log('Categories count:', categories.length);
+  console.log('Professional Layout - Categories:', categories.length);
   console.log('Canvas size:', canvasSize);
-  categories.forEach((category, index) => {
-    const customization = chartCustomization.categories[category.name] || category.customization;
-    console.log(`Category ${index} (${category.name}):`, {
-      position: customization?.position,
-      size: { width: customization?.width, height: customization?.height },
-      companies: category.companies.length
-    });
-  });
 
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold text-gray-900 mb-2">Ecosystem Chart</h2>
-          <p className="text-gray-600">Your market visualization is ready</p>
+          <p className="text-gray-600">Your professional market visualization</p>
         </div>
         
         <div className="flex space-x-3">
@@ -118,14 +121,12 @@ export default function EcosystemChart() {
       </div>
 
       <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-        {/* Modern Silicon Valley Style Chart Header */}
+        {/* Professional Header Design */}
         <div className="relative text-center py-16 px-8 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-hidden">
-          {/* Background Pattern */}
           <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 via-blue-600/10 to-cyan-600/10"></div>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(120,119,198,0.3),transparent_50%)]"></div>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(120,200,255,0.2),transparent_50%)]"></div>
           
-          {/* Floating Elements */}
           <div className="absolute top-8 left-8 w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
           <div className="absolute top-12 right-12 w-1 h-1 bg-purple-400 rounded-full animate-bounce"></div>
           <div className="absolute bottom-8 left-16 w-1.5 h-1.5 bg-blue-400 rounded-full animate-ping"></div>
@@ -140,19 +141,18 @@ export default function EcosystemChart() {
             </p>
           </div>
           
-          {/* Bottom Gradient Line */}
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent"></div>
         </div>
 
-        {/* Chart Content with structured layout */}
+        {/* Professional Chart Content */}
         <div
           ref={chartRef}
           className="relative bg-white overflow-hidden"
           style={{ 
             width: canvasSize.width,
             height: canvasSize.height,
-            minWidth: '1600px',
-            minHeight: '1200px'
+            minWidth: '1400px',
+            minHeight: '900px'
           }}
         >
           {categories.map((category, categoryIndex) => {
@@ -162,8 +162,8 @@ export default function EcosystemChart() {
               textColor: getContrastColor(category.color),
               size: 'medium' as const,
               position: { x: 60, y: 60 },
-              width: 340,
-              height: 300,
+              width: 380,
+              height: 450,
               twoColumn: false
             };
             

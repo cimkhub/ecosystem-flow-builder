@@ -69,7 +69,7 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
       size: 'medium' as const,
       position: { x: 0, y: 0 },
       width: 320,
-      height: 288,
+      height: 400,
       twoColumn: false
     };
 
@@ -164,21 +164,6 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
         const existingCustomization = chartCustomization.categories[name];
         const defaultColor = colorFromString(name);
 
-        // Calculate optimal dimensions based on content
-        const totalCompanies = allCompanies.length;
-        const itemHeight = 68;
-        const itemWidth = 120;
-        const containerPadding = 48;
-        const headerHeight = 100;
-        
-        // Calculate optimal columns (2-3 works best visually)
-        let optimalCols = Math.min(3, Math.max(2, Math.ceil(Math.sqrt(totalCompanies))));
-        const contentWidth = Math.max(340, optimalCols * itemWidth + containerPadding);
-        
-        // Calculate height with proper spacing
-        const rowsNeeded = Math.ceil(totalCompanies / optimalCols);
-        const contentHeight = Math.max(300, headerHeight + (rowsNeeded * itemHeight) + containerPadding + 30);
-
         return {
           name,
           companies: allCompanies,
@@ -190,86 +175,61 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
             textColor: getContrastColor(defaultColor),
             size: 'medium' as const,
             position: { x: 0, y: 0 },
-            width: contentWidth,
-            height: contentHeight,
+            width: 380,
+            height: 450,
             twoColumn: false
           }
         };
       })
       .sort((a, b) => a.name.localeCompare(b.name));
 
-    // STRUCTURED GRID LAYOUT ALGORITHM
+    // PROFESSIONAL GRID LAYOUT - Based on reference screenshot
     if (categories.length > 0) {
-      const canvasWidth = 1600; // Increased canvas width for better spacing
-      const canvasHeight = 1200; // Increased canvas height
-      const margin = 60; // Generous margin from edges
-      const gapX = 40; // Horizontal gap between categories
-      const gapY = 50; // Vertical gap between categories
-      
-      // Calculate available space
-      const availableWidth = canvasWidth - (2 * margin);
-      const availableHeight = canvasHeight - (2 * margin);
-      
-      // Determine optimal grid layout
-      const categoryCount = categories.length;
-      let bestLayout = { cols: 2, rows: Math.ceil(categoryCount / 2) };
-      
-      // Try different column configurations to find the best fit
-      for (let cols = 1; cols <= Math.min(4, categoryCount); cols++) {
-        const rows = Math.ceil(categoryCount / cols);
-        const avgWidth = categories.reduce((sum, cat) => sum + (cat.customization?.width || 340), 0) / categoryCount;
-        const avgHeight = categories.reduce((sum, cat) => sum + (cat.customization?.height || 300), 0) / categoryCount;
-        
-        const totalGridWidth = (cols * avgWidth) + ((cols - 1) * gapX);
-        const totalGridHeight = (rows * avgHeight) + ((rows - 1) * gapY);
-        
-        // Check if this layout fits well within available space
-        if (totalGridWidth <= availableWidth && totalGridHeight <= availableHeight) {
-          bestLayout = { cols, rows };
-        }
-      }
-      
-      console.log(`Optimal grid layout: ${bestLayout.cols} columns, ${bestLayout.rows} rows`);
-      console.log(`Canvas: ${canvasWidth}x${canvasHeight}, Available: ${availableWidth}x${availableHeight}`);
-      
       const updatedChartCustomization = { ...chartCustomization };
       
-      // Position categories in the structured grid
+      // Professional layout parameters
+      const CATEGORY_WIDTH = 380;
+      const CATEGORY_HEIGHT = 450;
+      const HORIZONTAL_GAP = 40;
+      const VERTICAL_GAP = 40;
+      const CANVAS_PADDING = 60;
+      
+      // Calculate optimal grid based on category count
+      const categoryCount = categories.length;
+      let cols = 3; // Default to 3 columns like the reference
+      
+      if (categoryCount <= 2) cols = 2;
+      else if (categoryCount <= 6) cols = 3;
+      else if (categoryCount <= 12) cols = 4;
+      else cols = Math.min(5, Math.ceil(Math.sqrt(categoryCount)));
+      
+      const rows = Math.ceil(categoryCount / cols);
+      
+      console.log(`Professional Grid Layout: ${cols} columns × ${rows} rows for ${categoryCount} categories`);
+      
+      // Position categories in perfect grid
       categories.forEach((category, index) => {
-        const row = Math.floor(index / bestLayout.cols);
-        const col = index % bestLayout.cols;
+        const row = Math.floor(index / cols);
+        const col = index % cols;
         
-        const categoryWidth = category.customization?.width || 340;
-        const categoryHeight = category.customization?.height || 300;
-        
-        // Calculate column width based on available space
-        const columnWidth = Math.floor(availableWidth / bestLayout.cols);
-        const remainingSpace = columnWidth - categoryWidth;
-        const horizontalOffset = Math.max(0, remainingSpace / 2); // Center in column
-        
-        // Calculate positions with proper grid spacing
-        const x = margin + (col * columnWidth) + horizontalOffset;
-        const y = margin + (row * (categoryHeight + gapY));
-        
-        // Ensure categories stay within bounds
-        const finalX = Math.min(x, canvasWidth - categoryWidth - margin);
-        const finalY = Math.min(y, canvasHeight - categoryHeight - margin);
+        const x = CANVAS_PADDING + (col * (CATEGORY_WIDTH + HORIZONTAL_GAP));
+        const y = CANVAS_PADDING + (row * (CATEGORY_HEIGHT + VERTICAL_GAP));
         
         const categoryCustomization: CategoryCustomization = {
           backgroundColor: category.customization?.backgroundColor || category.color,
           borderColor: category.customization?.borderColor || category.color,
           textColor: category.customization?.textColor || getContrastColor(category.color),
-          size: category.customization?.size || 'medium',
-          position: { x: finalX, y: finalY },
-          width: categoryWidth,
-          height: categoryHeight,
-          twoColumn: category.customization?.twoColumn || false
+          size: 'medium',
+          position: { x, y },
+          width: CATEGORY_WIDTH,
+          height: CATEGORY_HEIGHT,
+          twoColumn: false
         };
         
         category.customization = categoryCustomization;
         updatedChartCustomization.categories[category.name] = categoryCustomization;
         
-        console.log(`"${category.name}" positioned at (${finalX}, ${finalY}) - Grid: col ${col}, row ${row}`);
+        console.log(`"${category.name}" positioned at (${x}, ${y}) - Grid: col ${col}, row ${row}`);
       });
 
       set({ 
