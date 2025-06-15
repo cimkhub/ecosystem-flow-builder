@@ -25,17 +25,22 @@ export default function EcosystemChart() {
         useCORS: true,
         allowTaint: false,
         onclone: (clonedDoc) => {
-          // Fix for gradient text on H1 not rendering in export
+          // To fix gradient text on H1, we inject a new style and apply it.
+          // This is more robust than manipulating inline styles or classes directly.
+          const style = clonedDoc.createElement('style');
+          style.innerHTML = `
+            .h1-export-fix {
+              background: none !important;
+              -webkit-background-clip: initial !important;
+              background-clip: initial !important;
+              color: #f0f5ff !important;
+            }
+          `;
+          clonedDoc.head.appendChild(style);
+          
           const h1 = clonedDoc.querySelector('h1');
           if (h1) {
-            // html2canvas can't render `background-clip: text`.
-            // We'll remove the gradient and set a solid text color.
-            h1.style.backgroundImage = 'none';
-            h1.style.color = '#f0f5ff';
-            // We also need to remove properties that make the text invisible.
-            h1.style.webkitBackgroundClip = 'initial';
-            h1.style.backgroundClip = 'initial';
-            h1.classList.remove('text-transparent');
+            h1.classList.add('h1-export-fix');
           }
 
           // Fix for animated elements (like categories) not appearing in export
