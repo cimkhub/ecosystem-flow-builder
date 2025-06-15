@@ -63,4 +63,5 @@ export interface EcosystemState {
   mapColumnsAndCreateCompanies: (mapping: ColumnMapping) => void;
   updateChartCustomization: (customization: Partial<ChartCustomization>) => void;
   updateCategoryCustomization: (categoryName: string, customization: Partial<CategoryCustomization>) => void;
+  repositionAllCategories: () => void;
 }
