@@ -144,38 +144,41 @@ export default function EcosystemChart() {
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent"></div>
         </div>
 
-        {/* Professional Chart Content */}
-        <div
-          ref={chartRef}
-          className="relative bg-white overflow-hidden"
-          style={{ 
-            width: canvasSize.width,
-            height: canvasSize.height,
-            minWidth: '1400px',
-            minHeight: '900px'
-          }}
-        >
-          {categories.map((category, categoryIndex) => {
-            const customization = chartCustomization.categories[category.name] || category.customization || {
-              backgroundColor: category.color,
-              borderColor: category.color,
-              textColor: getContrastColor(category.color),
-              size: 'medium' as const,
-              position: { x: 60, y: 60 },
-              width: 380,
-              height: 450,
-              twoColumn: false
-            };
-            
-            return (
-              <ResizableCategory
-                key={category.name}
-                category={category}
-                customization={customization}
-                categoryIndex={categoryIndex}
-              />
-            );
-          })}
+        {/* Wrapper to allow horizontal scrolling for the chart */}
+        <div className="overflow-x-auto">
+          {/* Professional Chart Content */}
+          <div
+            ref={chartRef}
+            className="relative bg-white overflow-hidden"
+            style={{ 
+              width: canvasSize.width,
+              height: canvasSize.height,
+              minWidth: '1400px',
+              minHeight: '900px'
+            }}
+          >
+            {categories.map((category, categoryIndex) => {
+              const customization = chartCustomization.categories[category.name] || category.customization || {
+                backgroundColor: category.color,
+                borderColor: category.color,
+                textColor: getContrastColor(category.color),
+                size: 'medium' as const,
+                position: { x: 60, y: 60 },
+                width: 380,
+                height: 450,
+                twoColumn: false
+              };
+              
+              return (
+                <ResizableCategory
+                  key={category.name}
+                  category={category}
+                  customization={customization}
+                  categoryIndex={categoryIndex}
+                />
+              );
+            })}
+          </div>
         </div>
       </div>
 
