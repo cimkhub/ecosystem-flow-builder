@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -25,76 +24,65 @@ export default function ResizableCategory({
   const startMousePos = useRef({ x: 0, y: 0 });
   const startSize = useRef({ width: 0, height: 0 });
   const startPosition = useRef({ x: 0, y: 0 });
-  const [optimalColumns, setOptimalColumns] = useState(2);
+  const [optimalColumns, setOptimalColumns] = useState(1);
 
-  // Calculate optimal dimensions and columns to show all content without scrolling
+  // Dynamically calculate the optimal number of columns to best fit content
   useEffect(() => {
-    if (!category.subcategories || category.subcategories.length === 0) return;
+    const size = customization.size || 'medium';
+    const boxHeight = customization.height || 450;
     
-    const totalCompanies = category.subcategories.reduce((total, sub) => total + sub.companies.length, 0);
-    
-    if (totalCompanies === 0) {
+    // Define layout constants based on the component's styling
+    const PADDING_Y = { small: 32, medium: 48, large: 64 }[size];
+    const HEADER_H = { small: 60, medium: 72, large: 90 }[size];
+    const SUBCAT_HEADER_H = { small: 32, medium: 36, large: 40 }[size];
+    const SUBCAT_SPACING_Y = 16;
+    const ITEM_H = { small: 56, medium: 76, large: 80 }[size]; // Medium is updated for larger logos
+
+    const availableHeight = boxHeight - HEADER_H - PADDING_Y;
+
+    const totalCompanies = category.subcategories?.reduce((total, sub) => total + sub.companies.length, 0) || 0;
+    if (totalCompanies === 0 || availableHeight <= 0) {
       setOptimalColumns(1);
-      updateCategoryCustomization(category.name, { width: 320, height: 200 });
       return;
     }
 
-    // Calculate item dimensions based on size
-    const itemHeight = customization.size === 'small' ? 56 : customization.size === 'large' ? 80 : 68;
-    const itemWidth = 120;
-    const padding = customization.size === 'small' ? 32 : customization.size === 'large' ? 64 : 48;
-    const headerHeight = customization.size === 'small' ? 80 : customization.size === 'large' ? 120 : 100;
-    const subcategoryHeaderHeight = customization.size === 'small' ? 24 : customization.size === 'large' ? 32 : 28;
-    const subcategorySpacing = 16;
-    
-    // Calculate minimum and maximum columns based on total companies
-    const minColumns = 1;
-    const maxColumns = Math.min(6, totalCompanies);
-    
-    let bestConfig = { columns: 1, width: 320, height: 200 };
-    let minArea = Infinity;
-    
-    // Try different column configurations to find the most space-efficient layout
-    for (let cols = minColumns; cols <= maxColumns; cols++) {
-      const contentWidth = Math.max(320, cols * itemWidth + padding);
-      let totalHeight = headerHeight;
+    let bestConfig = { columns: 1, score: Infinity };
+    const maxColumnsToTest = 4;
+
+    for (let cols = 1; cols <= maxColumnsToTest; cols++) {
+      let requiredHeight = 0;
       
-      if (category.subcategories.length > 1) {
-        // Multiple subcategories - calculate height for each section
+      if (category.subcategories && category.subcategories.length > 1) {
         category.subcategories.forEach(subcategory => {
-          const companiesInSubcategory = subcategory.companies.length;
-          const rowsNeeded = Math.ceil(companiesInSubcategory / cols);
-          totalHeight += subcategoryHeaderHeight + (rowsNeeded * itemHeight) + subcategorySpacing;
+          const rowsNeeded = Math.ceil(subcategory.companies.length / cols);
+          requiredHeight += SUBCAT_HEADER_H + (rowsNeeded * ITEM_H);
         });
-      } else {
-        // Single subcategory - just calculate grid height
-        const rowsNeeded = Math.ceil(totalCompanies / cols);
-        totalHeight += rowsNeeded * itemHeight;
+        requiredHeight += (category.subcategories.length - 1) * SUBCAT_SPACING_Y;
+      } else if (category.subcategories && category.subcategories.length === 1) {
+        const rowsNeeded = Math.ceil(category.subcategories[0].companies.length / cols);
+        requiredHeight += (rowsNeeded * ITEM_H);
       }
       
-      totalHeight += padding;
+      const unusedSpace = availableHeight - requiredHeight;
       
-      // Calculate area and check if this is the most efficient
-      const area = contentWidth * totalHeight;
-      if (area < minArea) {
-        minArea = area;
-        bestConfig = { columns: cols, width: contentWidth, height: totalHeight };
+      let score;
+      if (unusedSpace < 0) {
+        // High penalty for overflow, proportional to how much it overflows
+        score = 1000 + Math.abs(unusedSpace); 
+      } else {
+        // Low score for less wasted space
+        score = unusedSpace;
+      }
+      
+      if (score < bestConfig.score) {
+        bestConfig = { columns: cols, score: score };
       }
     }
     
     setOptimalColumns(bestConfig.columns);
-    
-    // Only update dimensions if they're significantly different to avoid constant updates
-    const currentWidth = customization.width || 320;
-    const currentHeight = customization.height || 200;
-    
-    if (Math.abs(currentWidth - bestConfig.width) > 20 || Math.abs(currentHeight - bestConfig.height) > 20) {
-      updateCategoryCustomization(category.name, {
-        width: bestConfig.width,
-        height: bestConfig.height
-      });
-    }
-  }, [category.subcategories, customization.size, category.name, updateCategoryCustomization, customization.width, customization.height]);
+
+  }, [category.subcategories, customization.height, customization.size, category.name]);
+
 
   const handleMouseDown = (e: React.MouseEvent, direction: 'se' | 'e' | 's') => {
     e.preventDefault();
@@ -167,16 +155,6 @@ export default function ResizableCategory({
     document.addEventListener('mouseup', handleMouseUp);
   };
 
-  const cycleColumns = () => {
-    const totalCompanies = category.subcategories?.reduce((total, sub) => total + sub.companies.length, 0) || 0;
-    const maxColumns = Math.min(6, totalCompanies);
-    let nextColumns = optimalColumns + 1;
-    if (nextColumns > maxColumns) {
-      nextColumns = 1;
-    }
-    setOptimalColumns(nextColumns);
-  };
-
   const getDynamicSizes = (size: 'small' | 'medium' | 'large') => {
     switch (size) {
       case 'small': return { 
@@ -191,7 +169,7 @@ export default function ResizableCategory({
         titleFont: 'text-xl', 
         subtitleFont: 'text-sm', 
         companyFont: 'text-xs', 
-        logoSize: 'max-h-8 max-w-24',
+        logoSize: 'max-h-10 max-w-28', // Increased logo size
         padding: 'p-6',
         companyPadding: 'p-2'
       };
@@ -241,15 +219,11 @@ export default function ResizableCategory({
       
       {/* Controls */}
       <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-        <button
+        <div 
           onMouseDown={(e) => e.stopPropagation()}
-          onClick={cycleColumns}
-          className="p-1 bg-white/20 rounded hover:bg-white/30 transition-colors"
-          title={`${optimalColumns} columns - click to change`}
+          className="p-1.5 bg-white/20 rounded cursor-move" 
+          title="Drag to move"
         >
-          <span className="text-xs font-bold text-white">{optimalColumns}</span>
-        </button>
-        <div className="p-1 bg-white/20 rounded">
           <Move className="h-3 w-3 text-white" />
         </div>
       </div>
@@ -271,11 +245,11 @@ export default function ResizableCategory({
           {category.name.toUpperCase()}
         </h4>
         
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto pr-2 -mr-2">
           {/* Show subcategories as grouped sections if they exist, otherwise show all companies */}
           {category.subcategories && category.subcategories.length > 1 ? (
             // Multiple subcategories - show them as organized sections
-            <div className="space-y-4 h-full overflow-y-auto">
+            <div className="space-y-4 h-full">
               {category.subcategories.map((subcategory, subcategoryIndex) => (
                 <div
                   key={subcategory.name}
@@ -334,7 +308,7 @@ export default function ResizableCategory({
                 gridAutoRows: 'min-content'
               }}
             >
-              {category.subcategories?.[0]?.companies.map((company, companyIndex) => (
+              {(category.subcategories?.[0]?.companies || []).map((company, companyIndex) => (
                 <div
                   key={company.id}
                   className={`bg-white/95 backdrop-blur-sm rounded-lg ${dynamicSizes.companyPadding} flex flex-col items-center text-center transform transition-all duration-200 hover:scale-105 hover:bg-white animate-fade-in`}
@@ -359,7 +333,7 @@ export default function ResizableCategory({
                     {company.company_name}
                   </span>
                 </div>
-              )) || []}
+              ))}
             </div>
           )}
         </div>
