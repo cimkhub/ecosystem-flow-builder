@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { EcosystemState, Company, Category, RawDataRow, ColumnMapping, ChartCustomization, CategoryCustomization } from './types';
 import { colorFromString, getContrastColor } from './colorFromString';
@@ -164,20 +163,20 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
         const existingCustomization = chartCustomization.categories[name];
         const defaultColor = colorFromString(name);
 
-        // Calculate optimal dimensions based on content
+        // Calculate optimal dimensions with proper padding
         const totalCompanies = allCompanies.length;
         const itemHeight = 68;
         const itemWidth = 120;
-        const padding = 48;
+        const containerPadding = 48; // Internal padding for spacing between content and borders
         const headerHeight = 100;
         
-        // Find optimal width (2-3 columns typically work best)
+        // Find optimal columns (2-3 typically work best)
         let optimalCols = Math.min(3, Math.max(2, Math.ceil(Math.sqrt(totalCompanies))));
-        const contentWidth = Math.max(320, optimalCols * itemWidth + padding);
+        const contentWidth = Math.max(320, optimalCols * itemWidth + containerPadding);
         
-        // Calculate height based on rows needed
+        // Calculate height with extra bottom padding to prevent touching
         const rowsNeeded = Math.ceil(totalCompanies / optimalCols);
-        const contentHeight = Math.max(250, headerHeight + (rowsNeeded * itemHeight) + padding);
+        const contentHeight = Math.max(280, headerHeight + (rowsNeeded * itemHeight) + containerPadding + 20); // +20 for extra bottom spacing
 
         return {
           name,
@@ -198,37 +197,45 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
       })
       .sort((a, b) => a.name.localeCompare(b.name));
 
-    // NEW POSITIONING ALGORITHM: Proper 2D Grid Layout
+    // FIXED POSITIONING ALGORITHM with proper margins
     if (categories.length > 0) {
       const canvasWidth = 1400;
       const canvasHeight = 1000;
-      const margin = 30;
-      const spacing = 20;
+      const edgeMargin = 40; // Margin from canvas edges - ensures whitespace on ALL sides
+      const spacingBetweenBoxes = 25; // Space between category boxes
       
-      // Calculate how many columns we can fit
+      // Calculate available space for content
+      const availableWidth = canvasWidth - (2 * edgeMargin);
+      const availableHeight = canvasHeight - (2 * edgeMargin);
+      
+      // Calculate average width and determine optimal columns
       const avgWidth = categories.reduce((sum, cat) => sum + (cat.customization?.width || 320), 0) / categories.length;
-      const maxColumns = Math.floor((canvasWidth - 2 * margin + spacing) / (avgWidth + spacing));
+      const maxColumns = Math.floor((availableWidth + spacingBetweenBoxes) / (avgWidth + spacingBetweenBoxes));
       const optimalColumns = Math.min(maxColumns, Math.max(2, Math.ceil(Math.sqrt(categories.length))));
       
       console.log(`Grid layout: ${optimalColumns} columns for ${categories.length} categories`);
+      console.log(`Canvas: ${canvasWidth}x${canvasHeight}, Available: ${availableWidth}x${availableHeight}`);
+      console.log(`Edge margin: ${edgeMargin}, Box spacing: ${spacingBetweenBoxes}`);
       
       const updatedChartCustomization = { ...chartCustomization };
       
-      // Position each category in the grid
+      // Position each category in the grid with proper spacing
       categories.forEach((category, index) => {
         const row = Math.floor(index / optimalColumns);
         const col = index % optimalColumns;
         
         const categoryWidth = category.customization?.width || 320;
-        const categoryHeight = category.customization?.height || 250;
+        const categoryHeight = category.customization?.height || 280;
         
-        // Calculate position with proper grid spacing
-        const x = margin + col * (Math.floor((canvasWidth - 2 * margin) / optimalColumns));
-        const y = margin + row * (categoryHeight + spacing);
+        // Calculate position with proper grid spacing and edge margins
+        const x = edgeMargin + col * Math.floor(availableWidth / optimalColumns);
+        const y = edgeMargin + row * (categoryHeight + spacingBetweenBoxes);
         
-        // Ensure categories stay within canvas bounds
-        const finalX = Math.min(x, canvasWidth - categoryWidth - margin);
-        const finalY = Math.min(y, canvasHeight - categoryHeight - margin);
+        // Ensure categories stay within canvas bounds with proper margins
+        const maxX = canvasWidth - categoryWidth - edgeMargin;
+        const maxY = canvasHeight - categoryHeight - edgeMargin;
+        const finalX = Math.min(x, maxX);
+        const finalY = Math.min(y, maxY);
         
         const categoryCustomization: CategoryCustomization = {
           backgroundColor: category.customization?.backgroundColor || category.color,
@@ -244,7 +251,7 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
         category.customization = categoryCustomization;
         updatedChartCustomization.categories[category.name] = categoryCustomization;
         
-        console.log(`Category "${category.name}" positioned at (${finalX}, ${finalY}) - Grid position: col ${col}, row ${row}`);
+        console.log(`Category "${category.name}" positioned at (${finalX}, ${finalY}) - Grid: col ${col}, row ${row} - Margins respected`);
       });
 
       set({ 
