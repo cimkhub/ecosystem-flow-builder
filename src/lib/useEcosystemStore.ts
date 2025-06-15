@@ -234,12 +234,18 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
       const categoryCount = categories.length;
 
       if (chartCustomization.layoutOrientation === 'landscape') {
-        // NEW PPT-style LANDSCAPE LAYOUT
-        let cols = 4;
-        if (categoryCount <= 3) cols = categoryCount;
-        else if (categoryCount <= 8) cols = 4;
-        else if (categoryCount <= 12) cols = 4;
-        else cols = 5;
+        // DYNAMIC WIDE LANDSCAPE LAYOUT (PPT-style)
+        let cols;
+        if (categoryCount <= 4) {
+          // For 4 or fewer categories, create a single wide row
+          cols = categoryCount;
+        } else {
+          // For more categories, aim for a 2-row layout to keep it wide
+          cols = Math.ceil(categoryCount / 2);
+          // Clamp columns for readability: no more than 6, and at least 3
+          cols = Math.min(cols, 6);
+          cols = Math.max(cols, 3);
+        }
 
         const rows = Math.ceil(categoryCount / cols);
         
