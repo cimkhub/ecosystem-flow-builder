@@ -224,71 +224,75 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
       })
       .sort((a, b) => a.name.localeCompare(b.name));
 
-    // Calculate positions for each category with better distribution
+    // Improved positioning algorithm with tighter packing
     const canvasWidth = 1400;
     const canvasHeight = 1000;
-    const margin = 30;
+    const margin = 20; // Reduced margin
     
     if (categories.length === 0) {
       set({ categories });
       return;
     }
 
-    // Calculate grid layout based on number of categories
-    const totalCategories = categories.length;
-    let columns: number;
-    
-    if (totalCategories <= 2) {
-      columns = 2;
-    } else if (totalCategories <= 6) {
-      columns = 3;
-    } else if (totalCategories <= 12) {
-      columns = 4;
-    } else {
-      columns = 5;
-    }
-    
-    const rows = Math.ceil(totalCategories / columns);
-    
-    // Calculate available space per category
-    const availableWidth = (canvasWidth - (margin * (columns + 1))) / columns;
-    const availableHeight = (canvasHeight - (margin * (rows + 1))) / rows;
-    
-    // Position each category in the grid
+    // Calculate positions using a bin-packing approach
     const updatedChartCustomization = { ...chartCustomization };
+    const placedBoxes: Array<{ x: number; y: number; width: number; height: number }> = [];
     
     categories.forEach((category, index) => {
-      const row = Math.floor(index / columns);
-      const col = index % columns;
+      const categoryWidth = category.customization?.width || 320;
+      const categoryHeight = category.customization?.height || 250;
       
-      // Calculate position
-      const x = margin + (col * (availableWidth + margin));
-      const y = margin + (row * (availableHeight + margin));
+      let bestPosition = { x: margin, y: margin };
+      let placed = false;
       
-      // Ensure the category fits within available space
-      const categoryWidth = Math.min(category.customization?.width || 320, availableWidth);
-      const categoryHeight = Math.min(category.customization?.height || 250, availableHeight);
+      // Try to find a position that doesn't overlap with existing boxes
+      for (let y = margin; y <= canvasHeight - categoryHeight - margin && !placed; y += 20) {
+        for (let x = margin; x <= canvasWidth - categoryWidth - margin && !placed; x += 20) {
+          // Check if this position overlaps with any existing box
+          const overlaps = placedBoxes.some(box => {
+            return !(x >= box.x + box.width + margin || 
+                    x + categoryWidth + margin <= box.x || 
+                    y >= box.y + box.height + margin || 
+                    y + categoryHeight + margin <= box.y);
+          });
+          
+          if (!overlaps) {
+            bestPosition = { x, y };
+            placed = true;
+          }
+        }
+      }
       
-      // Update the category customization in the store
+      // If we couldn't find a non-overlapping position, use the best position anyway
+      // but ensure it's within canvas bounds
+      bestPosition.x = Math.min(bestPosition.x, canvasWidth - categoryWidth - margin);
+      bestPosition.y = Math.min(bestPosition.y, canvasHeight - categoryHeight - margin);
+      
+      // Record this box as placed
+      placedBoxes.push({
+        x: bestPosition.x,
+        y: bestPosition.y,
+        width: categoryWidth,
+        height: categoryHeight
+      });
+      
       const categoryCustomization: CategoryCustomization = {
         backgroundColor: category.customization?.backgroundColor || category.color,
         borderColor: category.customization?.borderColor || category.color,
         textColor: category.customization?.textColor || getContrastColor(category.color),
         size: category.customization?.size || 'medium',
-        position: { x, y },
+        position: bestPosition,
         width: categoryWidth,
         height: categoryHeight,
         twoColumn: category.customization?.twoColumn || false
       };
       
-      // Update both the category's customization and the store's chart customization
       category.customization = categoryCustomization;
       updatedChartCustomization.categories[category.name] = categoryCustomization;
       
-      console.log(`Positioned category ${category.name} at (${x}, ${y}) with size ${categoryWidth}x${categoryHeight}`);
+      console.log(`Positioned category ${category.name} at (${bestPosition.x}, ${bestPosition.y}) with size ${categoryWidth}x${categoryHeight}`);
     });
 
-    // Update the store with the new positions
     set({ 
       categories,
       chartCustomization: updatedChartCustomization

@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -364,30 +365,30 @@ export default function ResizableCategory({
         </div>
       </div>
       
-      {/* Resize Handles */}
+      {/* Resize Handles - Made more visible and functional */}
       <div className="absolute inset-0 pointer-events-none">
         {/* Bottom-right corner resize */}
         <div
-          className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity z-20"
+          className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity z-30 bg-white/20 rounded-tl-lg flex items-center justify-center"
           onMouseDown={(e) => handleMouseDown(e, 'se')}
         >
-          <GripVertical className="w-3 h-3 text-white/60 transform rotate-45" />
+          <GripVertical className="w-3 h-3 text-white/80 transform rotate-45" />
         </div>
         
         {/* Right edge resize */}
         <div
-          className="absolute top-1/2 right-0 w-2 h-8 cursor-e-resize pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity -translate-y-1/2 z-20"
+          className="absolute top-1/2 right-0 w-3 h-12 cursor-e-resize pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity -translate-y-1/2 z-30 bg-white/20 rounded-l-lg flex items-center justify-center"
           onMouseDown={(e) => handleMouseDown(e, 'e')}
         >
-          <div className="w-1 h-full bg-white/30 rounded-full mx-auto" />
+          <div className="w-1 h-6 bg-white/60 rounded-full" />
         </div>
         
         {/* Bottom edge resize */}
         <div
-          className="absolute bottom-0 left-1/2 w-8 h-2 cursor-s-resize pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity -translate-x-1/2 z-20"
+          className="absolute bottom-0 left-1/2 w-12 h-3 cursor-s-resize pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity -translate-x-1/2 z-30 bg-white/20 rounded-t-lg flex items-center justify-center"
           onMouseDown={(e) => handleMouseDown(e, 's')}
         >
-          <div className="w-full h-1 bg-white/30 rounded-full" />
+          <div className="w-6 h-1 bg-white/60 rounded-full" />
         </div>
       </div>
 
