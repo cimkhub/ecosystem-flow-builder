@@ -146,7 +146,7 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
     });
 
     const categories: Category[] = Array.from(categoryMap.entries())
-      .map(([name, subcategoryMap]) => {
+      .map(([name, subcategoryMap], categoryIndex) => {
         const allCompanies: Company[] = [];
         const subcategories: { name: string; companies: Company[] }[] = [];
 
@@ -161,20 +161,34 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
             allCompanies.push(...sortedCompanies);
           });
 
-        const customization = chartCustomization.categories[name];
+        const existingCustomization = chartCustomization.categories[name];
         const defaultColor = colorFromString(name);
+
+        // Calculate grid-based positioning with proper spacing
+        const boxWidth = 360; // Standard box width + margin
+        const boxHeight = 350; // Standard box height + margin
+        const canvasWidth = 1200; // Approximate canvas width
+        const columnsPerRow = Math.floor(canvasWidth / boxWidth);
+        
+        const row = Math.floor(categoryIndex / columnsPerRow);
+        const col = categoryIndex % columnsPerRow;
+        
+        const defaultPosition = {
+          x: col * boxWidth + 40, // 40px left margin
+          y: row * boxHeight + 40  // 40px top margin
+        };
 
         return {
           name,
           companies: allCompanies,
           subcategories,
-          color: customization?.backgroundColor || defaultColor,
-          customization: customization || {
+          color: existingCustomization?.backgroundColor || defaultColor,
+          customization: existingCustomization || {
             backgroundColor: defaultColor,
             borderColor: defaultColor,
             textColor: getContrastColor(defaultColor),
             size: 'medium' as const,
-            position: { x: 0, y: 0 },
+            position: defaultPosition,
             width: 320,
             height: 288,
             twoColumn: false
