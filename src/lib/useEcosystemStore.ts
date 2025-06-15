@@ -164,13 +164,12 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
         const existingCustomization = chartCustomization.categories[name];
         const defaultColor = colorFromString(name);
 
-        // Calculate optimal dimensions first
+        // Calculate optimal width and height for this category
         const totalCompanies = allCompanies.length;
         let optimalWidth = 320;
         let optimalHeight = 250;
         
         if (totalCompanies > 0) {
-          // Try different column configurations to find the most efficient layout
           const itemWidth = 120;
           const itemHeight = 68;
           const padding = 48;
@@ -206,35 +205,6 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
           }
         }
 
-        // Calculate grid-based positioning with dynamic spacing based on box sizes
-        const margin = 40;
-        const canvasWidth = 1200;
-        
-        // Calculate how many boxes can fit per row based on their width
-        const boxWidthWithMargin = optimalWidth + margin;
-        const columnsPerRow = Math.max(1, Math.floor((canvasWidth - margin) / boxWidthWithMargin));
-        
-        const row = Math.floor(categoryIndex / columnsPerRow);
-        const col = categoryIndex % columnsPerRow;
-        
-        // Use dynamic heights for vertical positioning
-        let yOffset = margin;
-        
-        // Calculate Y position based on previous boxes in the same column
-        for (let prevIndex = col; prevIndex < categoryIndex; prevIndex += columnsPerRow) {
-          const prevCategory = Array.from(categoryMap.keys())[prevIndex];
-          if (prevCategory && chartCustomization.categories[prevCategory]) {
-            yOffset += (chartCustomization.categories[prevCategory].height || 250) + margin;
-          } else {
-            yOffset += 250 + margin; // Default height estimate
-          }
-        }
-        
-        const defaultPosition = {
-          x: col * boxWidthWithMargin + margin,
-          y: yOffset
-        };
-
         return {
           name,
           companies: allCompanies,
@@ -245,7 +215,7 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
             borderColor: defaultColor,
             textColor: getContrastColor(defaultColor),
             size: 'medium' as const,
-            position: defaultPosition,
+            position: { x: 0, y: 0 }, // Will be calculated after all categories are created
             width: optimalWidth,
             height: optimalHeight,
             twoColumn: false
@@ -253,6 +223,48 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
         };
       })
       .sort((a, b) => a.name.localeCompare(b.name));
+
+    // Now calculate grid positions for all categories
+    const canvasWidth = 1200;
+    const canvasHeight = 1200;
+    const margin = 30;
+    
+    // Calculate how many columns we can fit
+    const avgWidth = categories.reduce((sum, cat) => sum + (cat.customization?.width || 320), 0) / categories.length;
+    const maxColumnsBasedOnWidth = Math.max(1, Math.floor((canvasWidth - margin) / (avgWidth + margin)));
+    const optimalColumns = Math.min(maxColumnsBasedOnWidth, Math.ceil(Math.sqrt(categories.length)));
+    
+    // Position categories in a grid
+    categories.forEach((category, index) => {
+      const row = Math.floor(index / optimalColumns);
+      const col = index % optimalColumns;
+      
+      // Calculate X position - distribute evenly across available width
+      const availableWidth = canvasWidth - (2 * margin);
+      const columnWidth = availableWidth / optimalColumns;
+      const categoryWidth = category.customization?.width || 320;
+      const x = margin + (col * columnWidth) + (columnWidth - categoryWidth) / 2;
+      
+      // Calculate Y position - stack rows with proper spacing
+      let y = margin;
+      for (let prevRowIndex = 0; prevRowIndex < row; prevRowIndex++) {
+        // Find the tallest box in this previous row
+        let maxHeightInRow = 0;
+        for (let prevColIndex = 0; prevColIndex < optimalColumns; prevColIndex++) {
+          const prevCategoryIndex = prevRowIndex * optimalColumns + prevColIndex;
+          if (prevCategoryIndex < categories.length) {
+            const prevCategory = categories[prevCategoryIndex];
+            maxHeightInRow = Math.max(maxHeightInRow, prevCategory.customization?.height || 250);
+          }
+        }
+        y += maxHeightInRow + margin;
+      }
+      
+      // Update the category's position
+      if (category.customization) {
+        category.customization.position = { x: Math.max(0, x), y };
+      }
+    });
 
     set({ categories });
   },
