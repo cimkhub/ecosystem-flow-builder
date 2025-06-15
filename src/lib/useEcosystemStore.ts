@@ -224,64 +224,64 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
       })
       .sort((a, b) => a.name.localeCompare(b.name));
 
-    // Improved positioning algorithm with tighter packing
+    // Better grid-based positioning with proper spacing
     const canvasWidth = 1400;
     const canvasHeight = 1000;
-    const margin = 20; // Reduced margin
+    const margin = 20;
+    const minSpacing = 15; // Minimum space between boxes
     
     if (categories.length === 0) {
       set({ categories });
       return;
     }
 
-    // Calculate positions using a bin-packing approach
+    // Calculate optimal grid layout
+    const totalCategories = categories.length;
+    let bestCols = 1;
+    let bestRows = totalCategories;
+    
+    // Find the best grid configuration that minimizes wasted space
+    for (let cols = 1; cols <= Math.min(4, totalCategories); cols++) {
+      const rows = Math.ceil(totalCategories / cols);
+      const avgWidth = categories.reduce((sum, cat) => sum + (cat.customization?.width || 320), 0) / totalCategories;
+      const avgHeight = categories.reduce((sum, cat) => sum + (cat.customization?.height || 250), 0) / totalCategories;
+      
+      const totalWidth = cols * avgWidth + (cols - 1) * minSpacing + 2 * margin;
+      const totalHeight = rows * avgHeight + (rows - 1) * minSpacing + 2 * margin;
+      
+      if (totalWidth <= canvasWidth && totalHeight <= canvasHeight) {
+        bestCols = cols;
+        bestRows = rows;
+      }
+    }
+
+    // Calculate available space per column
+    const availableWidth = canvasWidth - 2 * margin - (bestCols - 1) * minSpacing;
+    const colWidth = availableWidth / bestCols;
+    
     const updatedChartCustomization = { ...chartCustomization };
-    const placedBoxes: Array<{ x: number; y: number; width: number; height: number }> = [];
     
     categories.forEach((category, index) => {
-      const categoryWidth = category.customization?.width || 320;
+      const row = Math.floor(index / bestCols);
+      const col = index % bestCols;
+      
+      const categoryWidth = Math.min(category.customization?.width || 320, colWidth);
       const categoryHeight = category.customization?.height || 250;
       
-      let bestPosition = { x: margin, y: margin };
-      let placed = false;
+      // Calculate position with proper spacing
+      const x = margin + col * (colWidth + minSpacing);
+      const y = margin + row * (categoryHeight + minSpacing);
       
-      // Try to find a position that doesn't overlap with existing boxes
-      for (let y = margin; y <= canvasHeight - categoryHeight - margin && !placed; y += 20) {
-        for (let x = margin; x <= canvasWidth - categoryWidth - margin && !placed; x += 20) {
-          // Check if this position overlaps with any existing box
-          const overlaps = placedBoxes.some(box => {
-            return !(x >= box.x + box.width + margin || 
-                    x + categoryWidth + margin <= box.x || 
-                    y >= box.y + box.height + margin || 
-                    y + categoryHeight + margin <= box.y);
-          });
-          
-          if (!overlaps) {
-            bestPosition = { x, y };
-            placed = true;
-          }
-        }
-      }
-      
-      // If we couldn't find a non-overlapping position, use the best position anyway
-      // but ensure it's within canvas bounds
-      bestPosition.x = Math.min(bestPosition.x, canvasWidth - categoryWidth - margin);
-      bestPosition.y = Math.min(bestPosition.y, canvasHeight - categoryHeight - margin);
-      
-      // Record this box as placed
-      placedBoxes.push({
-        x: bestPosition.x,
-        y: bestPosition.y,
-        width: categoryWidth,
-        height: categoryHeight
-      });
+      // Ensure the box stays within bounds
+      const finalX = Math.min(x, canvasWidth - categoryWidth - margin);
+      const finalY = Math.min(y, canvasHeight - categoryHeight - margin);
       
       const categoryCustomization: CategoryCustomization = {
         backgroundColor: category.customization?.backgroundColor || category.color,
         borderColor: category.customization?.borderColor || category.color,
         textColor: category.customization?.textColor || getContrastColor(category.color),
         size: category.customization?.size || 'medium',
-        position: bestPosition,
+        position: { x: finalX, y: finalY },
         width: categoryWidth,
         height: categoryHeight,
         twoColumn: category.customization?.twoColumn || false
@@ -290,7 +290,7 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
       category.customization = categoryCustomization;
       updatedChartCustomization.categories[category.name] = categoryCustomization;
       
-      console.log(`Positioned category ${category.name} at (${bestPosition.x}, ${bestPosition.y}) with size ${categoryWidth}x${categoryHeight}`);
+      console.log(`Positioned category ${category.name} at (${finalX}, ${finalY}) with size ${categoryWidth}x${categoryHeight} in grid ${col},${row}`);
     });
 
     set({ 
