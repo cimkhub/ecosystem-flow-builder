@@ -166,7 +166,7 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
 
         // Calculate optimal width and height for this category
         const totalCompanies = allCompanies.length;
-        let optimalWidth = 320;
+        let optimalWidth = 300;
         let optimalHeight = 250;
         
         if (totalCompanies > 0) {
@@ -179,7 +179,7 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
           
           let bestArea = Infinity;
           
-          for (let cols = 1; cols <= Math.min(6, totalCompanies); cols++) {
+          for (let cols = 1; cols <= Math.min(4, totalCompanies); cols++) {
             const contentWidth = cols * itemWidth + padding;
             let totalHeight = headerHeight;
             
@@ -199,8 +199,8 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
             
             if (area < bestArea) {
               bestArea = area;
-              optimalWidth = contentWidth;
-              optimalHeight = totalHeight;
+              optimalWidth = Math.max(300, contentWidth);
+              optimalHeight = Math.max(250, totalHeight);
             }
           }
         }
@@ -224,31 +224,58 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
       })
       .sort((a, b) => a.name.localeCompare(b.name));
 
-    // Now calculate grid positions for all categories
-    const canvasWidth = 1200;
-    const canvasHeight = 1200;
-    const margin = 30;
+    // Calculate grid positions to fill the entire canvas
+    const canvasWidth = 1400; // Increased canvas width
+    const canvasHeight = 1000; // Fixed canvas height
+    const margin = 20; // Reduced margin for better space utilization
     
-    // Calculate how many columns we can fit
-    const avgWidth = categories.reduce((sum, cat) => sum + (cat.customization?.width || 320), 0) / categories.length;
-    const maxColumnsBasedOnWidth = Math.max(1, Math.floor((canvasWidth - margin) / (avgWidth + margin)));
-    const optimalColumns = Math.min(maxColumnsBasedOnWidth, Math.ceil(Math.sqrt(categories.length)));
+    if (categories.length === 0) {
+      set({ categories });
+      return;
+    }
+
+    // Calculate optimal grid layout
+    const totalCategories = categories.length;
+    let bestLayout = { cols: 1, rows: totalCategories };
+    let minWastedSpace = Infinity;
+
+    // Try different column configurations to find the best fit
+    for (let cols = 1; cols <= Math.min(5, totalCategories); cols++) {
+      const rows = Math.ceil(totalCategories / cols);
+      const avgWidth = categories.reduce((sum, cat) => sum + (cat.customization?.width || 300), 0) / totalCategories;
+      const avgHeight = categories.reduce((sum, cat) => sum + (cat.customization?.height || 250), 0) / totalCategories;
+      
+      const requiredWidth = cols * avgWidth + (cols + 1) * margin;
+      const requiredHeight = rows * avgHeight + (rows + 1) * margin;
+      
+      // Check if this layout fits in the canvas
+      if (requiredWidth <= canvasWidth && requiredHeight <= canvasHeight) {
+        const wastedSpace = (canvasWidth * canvasHeight) - (requiredWidth * requiredHeight);
+        if (wastedSpace < minWastedSpace) {
+          minWastedSpace = wastedSpace;
+          bestLayout = { cols, rows };
+        }
+      }
+    }
+
+    const { cols: optimalColumns } = bestLayout;
     
-    // Position categories in a grid
+    // Position categories in the grid
     categories.forEach((category, index) => {
       const row = Math.floor(index / optimalColumns);
       const col = index % optimalColumns;
       
-      // Calculate X position - distribute evenly across available width
-      const availableWidth = canvasWidth - (2 * margin);
-      const columnWidth = availableWidth / optimalColumns;
-      const categoryWidth = category.customization?.width || 320;
-      const x = margin + (col * columnWidth) + (columnWidth - categoryWidth) / 2;
+      // Calculate available space for this column
+      const availableWidth = (canvasWidth - ((optimalColumns + 1) * margin)) / optimalColumns;
+      const categoryWidth = Math.min(category.customization?.width || 300, availableWidth);
       
-      // Calculate Y position - stack rows with proper spacing
+      // Position X - center boxes within their columns
+      const x = margin + (col * (availableWidth + margin)) + ((availableWidth - categoryWidth) / 2);
+      
+      // Position Y - stack rows with dynamic spacing
       let y = margin;
       for (let prevRowIndex = 0; prevRowIndex < row; prevRowIndex++) {
-        // Find the tallest box in this previous row
+        // Find the tallest box in the previous row
         let maxHeightInRow = 0;
         for (let prevColIndex = 0; prevColIndex < optimalColumns; prevColIndex++) {
           const prevCategoryIndex = prevRowIndex * optimalColumns + prevColIndex;
@@ -260,9 +287,13 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
         y += maxHeightInRow + margin;
       }
       
-      // Update the category's position
+      // Update the category's position and ensure it fits properly
       if (category.customization) {
-        category.customization.position = { x: Math.max(0, x), y };
+        category.customization.position = { 
+          x: Math.max(margin, Math.min(x, canvasWidth - categoryWidth - margin)), 
+          y: Math.max(margin, y)
+        };
+        category.customization.width = categoryWidth;
       }
     });
 
