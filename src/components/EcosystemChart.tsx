@@ -157,15 +157,14 @@ export default function EcosystemChart() {
           }}
         >
           {categories.map((category, categoryIndex) => {
-            const customization = chartCustomization.categories[category.name] || {
+            // Use the customization from the store (which includes calculated positions)
+            // or fall back to the category's own customization
+            const customization = chartCustomization.categories[category.name] || category.customization || {
               backgroundColor: category.color,
               borderColor: category.color,
               textColor: getContrastColor(category.color),
               size: 'medium' as const,
-              position: { 
-                x: 50, 
-                y: 50 
-              },
+              position: { x: 50, y: 50 }, // Only use as absolute fallback
               width: 320,
               height: 288,
               twoColumn: false
