@@ -1,11 +1,13 @@
+
 'use client';
 
 import React, { useRef, useState } from 'react';
-import { Download, Share2, Sparkles, Settings2 } from 'lucide-react';
+import { Download, Share2, Sparkles, Settings2, GripVertical, Columns2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { useEcosystemStore } from '../lib/useEcosystemStore';
 import { getContrastColor } from '../lib/colorFromString';
 import ChartCustomizationPanel from './ChartCustomizationPanel';
+import ResizableCategory from './ResizableCategory';
 import { ScrollArea } from './ui/scroll-area';
 
 export default function EcosystemChart() {
@@ -36,56 +38,6 @@ export default function EcosystemChart() {
       link.click();
     } catch (error) {
       console.error('Error exporting chart:', error);
-    }
-  };
-
-  const getSizeClasses = (size: 'small' | 'medium' | 'large') => {
-    switch (size) {
-      case 'small': return { container: 'col-span-1', width: 'w-72', height: 'min-h-64' };
-      case 'medium': return { container: 'col-span-1', width: 'w-80', height: 'min-h-72' };
-      case 'large': return { container: 'col-span-1', width: 'w-96', height: 'min-h-80' };
-      default: return { container: 'col-span-1', width: 'w-80', height: 'min-h-72' };
-    }
-  };
-
-  const getDynamicSizes = (size: 'small' | 'medium' | 'large') => {
-    switch (size) {
-      case 'small': return { 
-        titleFont: 'text-lg', 
-        subtitleFont: 'text-sm', 
-        companyFont: 'text-xs', 
-        logoSize: 'max-h-6 max-w-20',
-        padding: 'p-4',
-        spacing: 'space-y-4',
-        companyPadding: 'p-3'
-      };
-      case 'medium': return { 
-        titleFont: 'text-xl', 
-        subtitleFont: 'text-base', 
-        companyFont: 'text-sm', 
-        logoSize: 'max-h-8 max-w-24',
-        padding: 'p-6',
-        spacing: 'space-y-6',
-        companyPadding: 'p-4'
-      };
-      case 'large': return { 
-        titleFont: 'text-2xl', 
-        subtitleFont: 'text-lg', 
-        companyFont: 'text-base', 
-        logoSize: 'max-h-10 max-w-28',
-        padding: 'p-8',
-        spacing: 'space-y-8',
-        companyPadding: 'p-5'
-      };
-      default: return { 
-        titleFont: 'text-xl', 
-        subtitleFont: 'text-base', 
-        companyFont: 'text-sm', 
-        logoSize: 'max-h-8 max-w-24',
-        padding: 'p-6',
-        spacing: 'space-y-6',
-        companyPadding: 'p-4'
-      };
     }
   };
 
@@ -175,85 +127,19 @@ export default function EcosystemChart() {
                 borderColor: category.color,
                 textColor: getContrastColor(category.color),
                 size: 'medium' as const,
-                position: { x: 0, y: 0 }
+                position: { x: 0, y: 0 },
+                width: 320,
+                height: 288,
+                twoColumn: false
               };
               
-              const sizeClasses = getSizeClasses(customization.size);
-              const dynamicSizes = getDynamicSizes(customization.size);
-              
               return (
-                <div
+                <ResizableCategory
                   key={category.name}
-                  className={`group relative rounded-2xl shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl animate-fade-in ${sizeClasses.container} ${sizeClasses.width} ${sizeClasses.height}`}
-                  style={{ 
-                    backgroundColor: customization.backgroundColor,
-                    borderColor: customization.borderColor,
-                    borderWidth: '2px',
-                    borderStyle: 'solid',
-                    animationDelay: `${categoryIndex * 150}ms`,
-                    transform: `translate(${customization.position.x}px, ${customization.position.y}px)`
-                  }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-2xl" />
-                  
-                  <div className={`relative h-full flex flex-col ${dynamicSizes.padding}`}>
-                    <h3
-                      className={`${dynamicSizes.titleFont} font-bold mb-6 text-center`}
-                      style={{ color: customization.textColor }}
-                    >
-                      {category.name}
-                    </h3>
-                    
-                    <div className={`flex-1 ${dynamicSizes.spacing}`}>
-                      {category.subcategories?.map((subcategory, subcategoryIndex) => (
-                        <div
-                          key={subcategory.name}
-                          className="animate-fade-in"
-                          style={{ animationDelay: `${(categoryIndex * 150) + (subcategoryIndex * 100)}ms` }}
-                        >
-                          <h4
-                            className={`${dynamicSizes.subtitleFont} font-semibold mb-4 text-center uppercase tracking-wide`}
-                            style={{ color: customization.textColor, opacity: 0.8 }}
-                          >
-                            {subcategory.name}
-                          </h4>
-                          
-                          <div className="grid grid-cols-1 gap-3">
-                            {subcategory.companies.map((company, companyIndex) => (
-                              <div
-                                key={company.id}
-                                className={`bg-white/95 backdrop-blur-sm rounded-xl ${dynamicSizes.companyPadding} flex flex-col items-center text-center transform transition-all duration-200 hover:scale-105 hover:bg-white animate-fade-in`}
-                                style={{ animationDelay: `${(categoryIndex * 150) + (subcategoryIndex * 100) + (companyIndex * 50)}ms` }}
-                              >
-                                {company.logoUrl ? (
-                                  <div className="mb-3 p-2 bg-white rounded-lg shadow-sm">
-                                    <img
-                                      src={company.logoUrl}
-                                      alt={company.company_name}
-                                      className={`${dynamicSizes.logoSize} object-contain`}
-                                    />
-                                  </div>
-                                ) : (
-                                  <div className={`mb-3 ${customization.size === 'small' ? 'w-6 h-6' : customization.size === 'large' ? 'w-10 h-10' : 'w-8 h-8'} bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center`}>
-                                    <span className={`${customization.size === 'small' ? 'text-xs' : customization.size === 'large' ? 'text-base' : 'text-sm'} font-semibold text-gray-600`}>
-                                      {company.company_name.charAt(0)}
-                                    </span>
-                                  </div>
-                                )}
-                                <span className={`${dynamicSizes.companyFont} font-medium text-gray-800 leading-relaxed`}>
-                                  {company.company_name}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="absolute top-2 right-2 w-2 h-2 bg-white/30 rounded-full" />
-                  <div className="absolute bottom-2 left-2 w-1 h-1 bg-white/20 rounded-full" />
-                </div>
+                  category={category}
+                  customization={customization}
+                  categoryIndex={categoryIndex}
+                />
               );
             })}
           </div>

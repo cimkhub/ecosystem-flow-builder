@@ -14,6 +14,9 @@ export interface CategoryCustomization {
   textColor: string;
   size: 'small' | 'medium' | 'large';
   position: { x: number; y: number };
+  width?: number;
+  height?: number;
+  twoColumn?: boolean;
 }
 
 export interface ChartCustomization {

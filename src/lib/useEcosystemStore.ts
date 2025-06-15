@@ -67,7 +67,10 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
       borderColor: colorFromString(categoryName),
       textColor: getContrastColor(colorFromString(categoryName)),
       size: 'medium' as const,
-      position: { x: 0, y: 0 }
+      position: { x: 0, y: 0 },
+      width: 320,
+      height: 288,
+      twoColumn: false
     };
 
     set({
@@ -171,7 +174,10 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
             borderColor: defaultColor,
             textColor: getContrastColor(defaultColor),
             size: 'medium' as const,
-            position: { x: 0, y: 0 }
+            position: { x: 0, y: 0 },
+            width: 320,
+            height: 288,
+            twoColumn: false
           }
         };
       })
