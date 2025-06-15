@@ -26,18 +26,52 @@ export default function ResizableCategory({
   const startMousePos = useRef({ x: 0, y: 0 });
   const startSize = useRef({ width: 0, height: 0 });
   const startPosition = useRef({ x: 0, y: 0 });
-  const [shouldUseTwoColumns, setShouldUseTwoColumns] = useState(false);
+  const [optimalColumns, setOptimalColumns] = useState(2);
 
-  // Calculate if two columns should be used based on content height
+  // Calculate optimal number of columns based on available space and content
   useEffect(() => {
     if (!contentRef.current) return;
     
-    const contentHeight = contentRef.current.scrollHeight;
+    const availableWidth = (customization.width || 320) - 48; // Subtract padding
     const availableHeight = (customization.height || 288) - 120; // Subtract header and padding
     
-    // Use two columns if content would overflow significantly
-    setShouldUseTwoColumns(contentHeight > availableHeight && !customization.twoColumn);
-  }, [category.companies, customization.height, customization.twoColumn]);
+    const totalCompanies = category.subcategories?.reduce((total, sub) => total + sub.companies.length, 0) || 0;
+    
+    if (totalCompanies === 0) {
+      setOptimalColumns(1);
+      return;
+    }
+
+    // Calculate item dimensions based on size
+    const itemHeight = customization.size === 'small' ? 56 : customization.size === 'large' ? 80 : 68;
+    const itemWidth = 120; // Approximate width for company items
+    
+    // Try different column counts to find the best fit
+    let bestColumns = 1;
+    let bestFit = 0;
+    
+    for (let cols = 1; cols <= Math.min(6, Math.floor(availableWidth / itemWidth)); cols++) {
+      const itemsPerColumn = Math.ceil(totalCompanies / cols);
+      const neededHeight = itemsPerColumn * itemHeight;
+      const neededWidth = cols * itemWidth;
+      
+      // Check if it fits and calculate how well it utilizes space
+      if (neededHeight <= availableHeight && neededWidth <= availableWidth) {
+        const utilization = (neededHeight / availableHeight) * (neededWidth / availableWidth);
+        if (utilization > bestFit) {
+          bestFit = utilization;
+          bestColumns = cols;
+        }
+      }
+    }
+    
+    // If user has manually set twoColumn, respect that unless it's clearly better to use optimal
+    if (customization.twoColumn && bestColumns <= 2) {
+      setOptimalColumns(2);
+    } else {
+      setOptimalColumns(bestColumns);
+    }
+  }, [category.subcategories, customization.width, customization.height, customization.size, customization.twoColumn]);
 
   const handleMouseDown = (e: React.MouseEvent, direction: 'se' | 'e' | 's') => {
     e.preventDefault();
@@ -110,9 +144,16 @@ export default function ResizableCategory({
     document.addEventListener('mouseup', handleMouseUp);
   };
 
-  const toggleTwoColumn = () => {
+  const cycleColumns = () => {
+    const maxColumns = Math.min(6, Math.floor(((customization.width || 320) - 48) / 120));
+    let nextColumns = optimalColumns + 1;
+    if (nextColumns > maxColumns) {
+      nextColumns = 1;
+    }
+    setOptimalColumns(nextColumns);
+    
     updateCategoryCustomization(category.name, {
-      twoColumn: !customization.twoColumn
+      twoColumn: nextColumns === 2
     });
   };
 
@@ -154,7 +195,7 @@ export default function ResizableCategory({
   };
 
   const dynamicSizes = getDynamicSizes(customization.size);
-  const useColumns = customization.twoColumn || shouldUseTwoColumns;
+  const columnsToUse = optimalColumns;
 
   return (
     <div
@@ -181,15 +222,11 @@ export default function ResizableCategory({
       <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
         <button
           onMouseDown={(e) => e.stopPropagation()}
-          onClick={toggleTwoColumn}
+          onClick={cycleColumns}
           className="p-1 bg-white/20 rounded hover:bg-white/30 transition-colors"
-          title={customization.twoColumn ? "Switch to single column" : "Switch to two columns"}
+          title={`Switch to ${columnsToUse === 1 ? '2' : columnsToUse + 1} columns`}
         >
-          {useColumns ? (
-            <Columns className="h-3 w-3 text-white" />
-          ) : (
-            <Columns2 className="h-3 w-3 text-white" />
-          )}
+          <span className="text-xs font-bold text-white">{columnsToUse}</span>
         </button>
         <div className="p-1 bg-white/20 rounded">
           <Move className="h-3 w-3 text-white" />
@@ -221,7 +258,12 @@ export default function ResizableCategory({
                 {subcategory.name}
               </h4>
               
-              <div className={`grid gap-2 ${useColumns ? 'grid-cols-2' : 'grid-cols-1'}`}>
+              <div 
+                className={`grid gap-2`}
+                style={{ 
+                  gridTemplateColumns: `repeat(${columnsToUse}, 1fr)` 
+                }}
+              >
                 {subcategory.companies.map((company, companyIndex) => (
                   <div
                     key={company.id}
