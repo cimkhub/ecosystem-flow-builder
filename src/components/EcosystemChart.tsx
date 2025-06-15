@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useRef, useState } from 'react';
@@ -25,22 +24,13 @@ export default function EcosystemChart() {
         useCORS: true,
         allowTaint: false,
         onclone: (clonedDoc) => {
-          // To fix gradient text on H1, we inject a new style and apply it.
-          // This is more robust than manipulating inline styles or classes directly.
-          const style = clonedDoc.createElement('style');
-          style.innerHTML = `
-            .h1-export-fix {
-              background: none !important;
-              -webkit-background-clip: initial !important;
-              background-clip: initial !important;
-              color: #f0f5ff !important;
-            }
-          `;
-          clonedDoc.head.appendChild(style);
-          
+          // Robust fix for gradient text on H1 during export.
+          // We find the H1 in the cloned document and replace its classes
+          // to remove the text-gradient effect, which html2canvas
+          // cannot render correctly. We apply a solid text color instead.
           const h1 = clonedDoc.querySelector('h1');
           if (h1) {
-            h1.classList.add('h1-export-fix');
+            h1.className = 'text-6xl font-black text-gray-100 mb-4 tracking-tight leading-tight';
           }
 
           // Fix for animated elements (like categories) not appearing in export
