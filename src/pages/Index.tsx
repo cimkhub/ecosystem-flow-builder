@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState } from 'react';
@@ -67,8 +66,7 @@ export default function Index() {
             </h1>
             
             <p className="text-xl text-gray-600 mb-8 leading-relaxed animate-fade-in">
-              Transform your company data into stunning market-map visualizations with our 
-              AI-powered platform. Used by 500+ startups worldwide.
+              Transform companies into stunning ecosystem-map visualizations. Trusted by over 500 ecosystem builders worldwide.
             </p>
 
             <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-500 animate-fade-in">
