@@ -233,6 +233,20 @@ export default function EcosystemChart() {
             );
           })}
         </div>
+        
+        <div className="text-center py-6 px-8 border-t border-gray-100">
+          <p className="text-sm text-gray-500 tracking-wide">
+            by{' '}
+            <a
+              href="https://www.ecosystem-flow-builder.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-purple-600 hover:underline"
+            >
+              www.ecosystem-flow-builder.com
+            </a>
+          </p>
+        </div>
       </div>
 
       <ChartCustomizationPanel 
@@ -242,3 +256,4 @@ export default function EcosystemChart() {
     </div>
   );
 }
+
