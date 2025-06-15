@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useRef, useState } from 'react';
@@ -156,10 +155,7 @@ export default function EcosystemChart() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Ecosystem Chart</h2>
-          <p className="text-gray-600 mb-4">Your professional market visualization</p>
+      <div className="flex flex-wrap justify-end items-center gap-x-6 gap-y-3">
           <button
             onClick={exportChart}
             className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-2 rounded-xl transition-all duration-200 hover:scale-105 shadow-lg"
@@ -167,9 +163,6 @@ export default function EcosystemChart() {
             <Download className="h-4 w-4" />
             <span>Export PNG</span>
           </button>
-        </div>
-        
-        <div className="flex items-center flex-wrap gap-x-6 gap-y-3 md:justify-end">
            <div className="flex items-center space-x-2">
             <Label htmlFor="layout-toggle" className="text-sm font-medium text-gray-700 whitespace-nowrap">Portrait</Label>
             <Switch
@@ -213,7 +206,6 @@ export default function EcosystemChart() {
             <Share2 className="h-4 w-4" />
             <span>Share</span>
           </button>
-        </div>
       </div>
 
       <div
