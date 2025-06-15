@@ -10,25 +10,18 @@ import ResizableCategory from './ResizableCategory';
 
 export default function EcosystemChart() {
   const { categories, chartCustomization } = useEcosystemStore();
-  const chartRef = useRef<HTMLDivElement>(null);
+  const exportRef = useRef<HTMLDivElement>(null);
   const [showCustomization, setShowCustomization] = useState(false);
 
   const exportChart = async () => {
-    if (!chartRef.current) return;
+    if (!exportRef.current) return;
 
     try {
-      const originalTransform = chartRef.current.style.transform;
-      chartRef.current.style.transform = 'scale(2)';
-      chartRef.current.style.transformOrigin = 'top left';
-
-      const canvas = await html2canvas(chartRef.current, {
-        scale: 1,
+      const canvas = await html2canvas(exportRef.current, {
+        scale: 2,
         useCORS: true,
         allowTaint: false,
-        backgroundColor: '#ffffff',
       });
-
-      chartRef.current.style.transform = originalTransform;
 
       const link = document.createElement('a');
       link.download = `${chartCustomization.title.toLowerCase().replace(/\s+/g, '-')}-ecosystem-chart.png`;
@@ -109,7 +102,10 @@ export default function EcosystemChart() {
         </div>
       </div>
 
-      <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-xl border border-gray-100">
+      <div
+        ref={exportRef}
+        className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-xl border border-gray-100"
+      >
         {/* Professional Header Design */}
         <div className="relative text-center py-16 px-8 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 via-blue-600/10 to-cyan-600/10"></div>
@@ -135,7 +131,6 @@ export default function EcosystemChart() {
 
         {/* Professional Chart Content */}
         <div
-          ref={chartRef}
           className="relative bg-white mx-auto"
           style={{ 
             width: canvasSize.width,
