@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -202,6 +201,10 @@ export default function ResizableCategory({
   const logoContainerClasses = showLogoBackground
     ? 'mb-1 p-1 bg-white rounded-md shadow-sm flex-shrink-0'
     : 'mb-1 flex-shrink-0';
+  
+  const companyItemClasses = showLogoBackground
+    ? `bg-white/95 backdrop-blur-sm rounded-lg ${dynamicSizes.companyPadding} flex flex-col items-center text-center transform transition-all duration-200 hover:scale-105 hover:bg-white animate-fade-in`
+    : `rounded-lg ${dynamicSizes.companyPadding} flex flex-col items-center text-center transform transition-all duration-200 hover:scale-105 hover:bg-black/10 animate-fade-in`;
 
   return (
     <div
@@ -279,7 +282,7 @@ export default function ResizableCategory({
                     {subcategory.companies.map((company, companyIndex) => (
                       <div
                         key={company.id}
-                        className={`bg-white/95 backdrop-blur-sm rounded-lg ${dynamicSizes.companyPadding} flex flex-col items-center text-center transform transition-all duration-200 hover:scale-105 hover:bg-white animate-fade-in`}
+                        className={companyItemClasses}
                         style={{ animationDelay: `${(categoryIndex * 150) + (subcategoryIndex * 100) + (companyIndex * 50)}ms` }}
                       >
                         {company.logoUrl ? (
@@ -297,7 +300,10 @@ export default function ResizableCategory({
                             </span>
                           </div>
                         )}
-                        <span className={`${dynamicSizes.companyFont} font-medium text-gray-800 leading-tight text-center`}>
+                        <span 
+                          className={`${dynamicSizes.companyFont} font-medium leading-tight text-center`}
+                          style={{ color: showLogoBackground ? '#1f2937' : customization.textColor }}
+                        >
                           {company.company_name}
                         </span>
                       </div>
@@ -318,7 +324,7 @@ export default function ResizableCategory({
               {(category.subcategories?.[0]?.companies || []).map((company, companyIndex) => (
                 <div
                   key={company.id}
-                  className={`bg-white/95 backdrop-blur-sm rounded-lg ${dynamicSizes.companyPadding} flex flex-col items-center text-center transform transition-all duration-200 hover:scale-105 hover:bg-white animate-fade-in`}
+                  className={companyItemClasses}
                   style={{ animationDelay: `${(categoryIndex * 150) + (companyIndex * 50)}ms` }}
                 >
                   {company.logoUrl ? (
@@ -336,7 +342,10 @@ export default function ResizableCategory({
                       </span>
                     </div>
                   )}
-                  <span className={`${dynamicSizes.companyFont} font-medium text-gray-800 leading-tight text-center`}>
+                  <span 
+                    className={`${dynamicSizes.companyFont} font-medium leading-tight text-center`}
+                    style={{ color: showLogoBackground ? '#1f2937' : customization.textColor }}
+                  >
                     {company.company_name}
                   </span>
                 </div>
