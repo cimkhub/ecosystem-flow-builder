@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useRef, useState } from 'react';
@@ -7,9 +8,11 @@ import { useEcosystemStore } from '../lib/useEcosystemStore';
 import { getContrastColor } from '../lib/colorFromString';
 import ChartCustomizationPanel from './ChartCustomizationPanel';
 import ResizableCategory from './ResizableCategory';
+import { Switch } from './ui/switch';
+import { Label } from './ui/label';
 
 export default function EcosystemChart() {
-  const { categories, chartCustomization } = useEcosystemStore();
+  const { categories, chartCustomization, updateChartCustomization } = useEcosystemStore();
   const exportRef = useRef<HTMLDivElement>(null);
   const [showCustomization, setShowCustomization] = useState(false);
 
@@ -78,7 +81,28 @@ export default function EcosystemChart() {
           <p className="text-gray-600">Your professional market visualization</p>
         </div>
         
-        <div className="flex space-x-3">
+        <div className="flex items-center flex-wrap gap-x-6 gap-y-3">
+           <div className="flex items-center space-x-2">
+            <Label htmlFor="layout-toggle" className="text-sm font-medium text-gray-700 whitespace-nowrap">Portrait</Label>
+            <Switch
+                id="layout-toggle"
+                checked={chartCustomization.layoutOrientation === 'landscape'}
+                onCheckedChange={(checked) => {
+                    updateChartCustomization({ layoutOrientation: checked ? 'landscape' : 'portrait' });
+                }}
+            />
+            <Label htmlFor="layout-toggle" className="text-sm font-medium text-gray-700">Landscape</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="logo-bg-toggle" className="text-sm font-medium text-gray-700">Logo BG</Label>
+            <Switch
+                id="logo-bg-toggle"
+                checked={!!chartCustomization.showLogoBackground}
+                onCheckedChange={(checked) => {
+                    updateChartCustomization({ showLogoBackground: checked });
+                }}
+            />
+          </div>
           <button
             onClick={() => setShowCustomization(true)}
             className="flex items-center space-x-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-2 rounded-xl transition-all duration-200 hover:scale-105 shadow-lg"

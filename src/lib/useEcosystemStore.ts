@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { EcosystemState, Company, Category, RawDataRow, ColumnMapping, ChartCustomization, CategoryCustomization } from './types';
 import { colorFromString, getContrastColor } from './colorFromString';
@@ -13,7 +14,9 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
   chartCustomization: {
     title: 'AI Ecosystem Map',
     subtitle: 'Market Landscape Overview',
-    categories: {}
+    categories: {},
+    layoutOrientation: 'portrait',
+    showLogoBackground: true,
   },
 
   setCompanies: (companies: Company[]) => {
@@ -50,13 +53,17 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
   },
 
   updateChartCustomization: (customization: Partial<ChartCustomization>) => {
-    const { chartCustomization } = get();
-    set({ 
-      chartCustomization: { 
-        ...chartCustomization, 
-        ...customization 
-      } 
+    const { chartCustomization, generateCategories } = get();
+    set({
+      chartCustomization: {
+        ...chartCustomization,
+        ...customization,
+      },
     });
+    // Re-generate categories if layout changes
+    if (customization.layoutOrientation) {
+      generateCategories();
+    }
   },
 
   updateCategoryCustomization: (categoryName: string, customization: Partial<CategoryCustomization>) => {
@@ -226,47 +233,109 @@ export const useEcosystemStore = create<EcosystemState>((set, get) => ({
       const categoryHeights = categories.map(category => calculateCategoryHeight(category));
       
       const categoryCount = categories.length;
-      let cols = 3;
-      if (categoryCount <= 2) cols = 2;
-      else if (categoryCount <= 6) cols = 3;
-      else if (categoryCount <= 12) cols = 4;
-      else cols = Math.min(5, Math.ceil(Math.sqrt(categoryCount)));
-      
-      const rowHeights: number[] = [];
-      for (let i = 0; i < Math.ceil(categoryCount / cols); i++) {
-        const rowSlice = categoryHeights.slice(i * cols, (i * cols) + cols);
-        if (rowSlice.length > 0) {
-          rowHeights.push(Math.max(...rowSlice));
-        }
-      }
-      
-      const rowYOffsets = [CANVAS_PADDING];
-      for (let i = 0; i < rowHeights.length - 1; i++) {
-        rowYOffsets.push(rowYOffsets[i] + rowHeights[i] + VERTICAL_GAP);
-      }
 
-      categories.forEach((category, index) => {
-        const row = Math.floor(index / cols);
-        const col = index % cols;
+      if (chartCustomization.layoutOrientation === 'landscape') {
+        // LANDSCAPE LAYOUT
+        let rows = 2;
+        if (categoryCount <= 3) rows = 1;
+        else if (categoryCount <= 8) rows = 2;
+        else rows = 3;
+
+        const cols = Math.ceil(categoryCount / rows);
         
-        const x = CANVAS_PADDING + (col * (CATEGORY_WIDTH + HORIZONTAL_GAP));
-        const y = rowYOffsets[row];
+        const rowHeights: number[] = [];
+        for (let i = 0; i < rows; i++) {
+            const indicesInRow = [];
+            for (let j = 0; j < cols; j++) {
+                const index = i + j * rows;
+                if (index < categoryCount) {
+                    indicesInRow.push(index);
+                }
+            }
+            if (indicesInRow.length > 0) {
+                const maxRowHeight = Math.max(...indicesInRow.map(k => categoryHeights[k]));
+                rowHeights.push(maxRowHeight);
+            } else {
+                rowHeights.push(0);
+            }
+        }
+
+        const colXOffsets = [CANVAS_PADDING];
+        for (let i = 0; i < cols - 1; i++) {
+          colXOffsets.push(colXOffsets[i] + CATEGORY_WIDTH + HORIZONTAL_GAP);
+        }
         
-        const categoryCustomization: CategoryCustomization = {
-          ...category.customization,
-          backgroundColor: category.customization?.backgroundColor || category.color,
-          borderColor: category.customization?.borderColor || category.color,
-          textColor: category.customization?.textColor || getContrastColor(category.color),
-          size: 'medium',
-          position: { x, y },
-          width: CATEGORY_WIDTH,
-          height: categoryHeights[index],
-          twoColumn: false
-        };
+        const rowYOffsets = [CANVAS_PADDING];
+        for (let i = 0; i < rowHeights.length - 1; i++) {
+          rowYOffsets.push(rowYOffsets[i] + rowHeights[i] + VERTICAL_GAP);
+        }
+
+        categories.forEach((category, index) => {
+          const col = Math.floor(index / rows);
+          const row = index % rows;
+          
+          const x = colXOffsets[col];
+          const y = rowYOffsets[row];
+          
+          const categoryCustomization: CategoryCustomization = {
+            ...category.customization,
+            backgroundColor: category.customization?.backgroundColor || category.color,
+            borderColor: category.customization?.borderColor || category.color,
+            textColor: category.customization?.textColor || getContrastColor(category.color),
+            size: 'medium',
+            position: { x, y },
+            width: CATEGORY_WIDTH,
+            height: rowHeights[row],
+            twoColumn: false
+          };
+          
+          category.customization = categoryCustomization;
+          updatedChartCustomization.categories[category.name] = categoryCustomization;
+        });
+      } else {
+        // PORTRAIT LAYOUT
+        let cols = 3;
+        if (categoryCount <= 2) cols = 2;
+        else if (categoryCount <= 6) cols = 3;
+        else if (categoryCount <= 12) cols = 4;
+        else cols = Math.min(5, Math.ceil(Math.sqrt(categoryCount)));
         
-        category.customization = categoryCustomization;
-        updatedChartCustomization.categories[category.name] = categoryCustomization;
-      });
+        const rowHeights: number[] = [];
+        for (let i = 0; i < Math.ceil(categoryCount / cols); i++) {
+          const rowSlice = categoryHeights.slice(i * cols, (i * cols) + cols);
+          if (rowSlice.length > 0) {
+            rowHeights.push(Math.max(...rowSlice));
+          }
+        }
+        
+        const rowYOffsets = [CANVAS_PADDING];
+        for (let i = 0; i < rowHeights.length - 1; i++) {
+          rowYOffsets.push(rowYOffsets[i] + rowHeights[i] + VERTICAL_GAP);
+        }
+
+        categories.forEach((category, index) => {
+          const row = Math.floor(index / cols);
+          const col = index % cols;
+          
+          const x = CANVAS_PADDING + (col * (CATEGORY_WIDTH + HORIZONTAL_GAP));
+          const y = rowYOffsets[row];
+          
+          const categoryCustomization: CategoryCustomization = {
+            ...category.customization,
+            backgroundColor: category.customization?.backgroundColor || category.color,
+            borderColor: category.customization?.borderColor || category.color,
+            textColor: category.customization?.textColor || getContrastColor(category.color),
+            size: 'medium',
+            position: { x, y },
+            width: CATEGORY_WIDTH,
+            height: categoryHeights[index],
+            twoColumn: false
+          };
+          
+          category.customization = categoryCustomization;
+          updatedChartCustomization.categories[category.name] = categoryCustomization;
+        });
+      }
 
       set({ 
         categories,

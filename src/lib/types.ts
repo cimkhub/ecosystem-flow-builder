@@ -1,4 +1,3 @@
-
 export interface Company {
   id: string;
   company_name: string;
@@ -23,6 +22,8 @@ export interface ChartCustomization {
   title: string;
   subtitle: string;
   categories: Record<string, CategoryCustomization>;
+  layoutOrientation?: 'portrait' | 'landscape';
+  showLogoBackground?: boolean;
 }
 
 export interface Category {
