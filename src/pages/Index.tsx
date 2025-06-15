@@ -16,6 +16,10 @@ export default function Index() {
     setActiveTab('logos');
   };
 
+  const handleViewChart = () => {
+    setActiveTab('chart');
+  };
+
   const tabs = [
     { 
       id: 'data', 
@@ -174,7 +178,7 @@ export default function Index() {
                       <h2 className="text-3xl font-bold text-gray-900 mb-3">Upload Company Logos</h2>
                       <p className="text-gray-600">Add logos to make your ecosystem chart more professional</p>
                     </div>
-                    <LogoUploader />
+                    <LogoUploader onViewChart={handleViewChart} />
                   </div>
                 )}
 

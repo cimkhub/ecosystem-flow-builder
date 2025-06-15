@@ -1,11 +1,16 @@
+
 'use client';
 
 import React, { useCallback, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Image, X, Upload, Sparkles, CheckCircle2, FolderOpen } from 'lucide-react';
+import { Image, X, Upload, Sparkles, CheckCircle2, FolderOpen, Building2, ArrowRight } from 'lucide-react';
 import { useEcosystemStore } from '../lib/useEcosystemStore';
 
-export default function LogoUploader() {
+interface LogoUploaderProps {
+  onViewChart?: () => void;
+}
+
+export default function LogoUploader({ onViewChart }: LogoUploaderProps) {
   const { logos, addLogo, removeLogo, companies } = useEcosystemStore();
   const folderInputRef = useRef<HTMLInputElement>(null);
 
@@ -151,40 +156,60 @@ export default function LogoUploader() {
       </div>
 
       {logoArray.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {logoArray.map(([filename, file], index) => (
-            <div 
-              key={filename} 
-              className="relative group animate-fade-in"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <div className="bg-white border-2 border-gray-100 rounded-xl p-4 hover:shadow-lg hover:border-purple-200 transition-all duration-300 hover:scale-105">
-                <div className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center mb-3 overflow-hidden">
-                  <img
-                    src={URL.createObjectURL(file)}
-                    alt={filename}
-                    className="max-w-full max-h-full object-contain"
-                  />
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {logoArray.map(([filename, file], index) => (
+              <div 
+                key={filename} 
+                className="relative group animate-fade-in"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div className="bg-white border-2 border-gray-100 rounded-xl p-4 hover:shadow-lg hover:border-purple-200 transition-all duration-300 hover:scale-105">
+                  <div className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center mb-3 overflow-hidden">
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt={filename}
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-600 truncate font-medium" title={filename}>
+                    {filename}
+                  </p>
+                  
+                  {/* Success indicator */}
+                  <div className="absolute top-2 left-2 bg-green-100 text-green-600 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <CheckCircle2 className="h-3 w-3" />
+                  </div>
+                  
+                  <button
+                    onClick={() => removeLogo(filename)}
+                    className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
                 </div>
-                <p className="text-xs text-gray-600 truncate font-medium" title={filename}>
-                  {filename}
-                </p>
-                
-                {/* Success indicator */}
-                <div className="absolute top-2 left-2 bg-green-100 text-green-600 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  <CheckCircle2 className="h-3 w-3" />
-                </div>
-                
-                <button
-                  onClick={() => removeLogo(filename)}
-                  className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
-                >
-                  <X className="h-3 w-3" />
-                </button>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+
+          {/* View Chart Button */}
+          <div className="flex justify-center pt-6">
+            <button
+              onClick={onViewChart}
+              className="group relative bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-4 px-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+              
+              <div className="relative flex items-center space-x-3">
+                <div className="p-2 bg-white/20 rounded-lg group-hover:bg-white/30 transition-colors duration-300">
+                  <Building2 className="h-5 w-5" />
+                </div>
+                <span className="text-lg">View Chart</span>
+                <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
+              </div>
+            </button>
+          </div>
+        </>
       )}
 
       {companies.length > 0 && (
