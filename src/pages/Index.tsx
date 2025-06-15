@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -9,7 +10,7 @@ import { useEcosystemStore } from '../lib/useEcosystemStore';
 
 export default function Index() {
   const [activeTab, setActiveTab] = useState<'data' | 'logos' | 'chart'>('data');
-  const { companies, categories } = useEcosystemStore();
+  const { companies, categories, showColumnMapper } = useEcosystemStore();
 
   const handleMappingComplete = () => {
     setActiveTab('logos');
@@ -157,10 +158,12 @@ export default function Index() {
               <div className="p-8 md:p-12">
                 {activeTab === 'data' && (
                   <div className="animate-fade-in">
-                    <div className="text-center mb-8">
-                      <h2 className="text-3xl font-bold text-gray-900 mb-3">Upload Company Data</h2>
-                      <p className="text-gray-600">Import your company data to get started with visualization</p>
-                    </div>
+                    {!showColumnMapper && (
+                      <div className="text-center mb-8">
+                        <h2 className="text-3xl font-bold text-gray-900 mb-3">Upload Company Data</h2>
+                        <p className="text-gray-600">Import your company data to get started with visualization</p>
+                      </div>
+                    )}
                     <FileUploader onMappingComplete={handleMappingComplete} />
                   </div>
                 )}
