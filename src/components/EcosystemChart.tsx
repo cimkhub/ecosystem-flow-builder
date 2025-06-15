@@ -55,6 +55,37 @@ export default function EcosystemChart() {
     );
   }
 
+  // Calculate the required canvas size based on category positions and sizes
+  const calculateCanvasSize = () => {
+    let maxX = 1400; // minimum width
+    let maxY = 1000; // minimum height
+    
+    categories.forEach(category => {
+      const customization = chartCustomization.categories[category.name] || category.customization;
+      if (customization && customization.position) {
+        const rightEdge = customization.position.x + (customization.width || 320);
+        const bottomEdge = customization.position.y + (customization.height || 250);
+        maxX = Math.max(maxX, rightEdge + 20); // 20px margin
+        maxY = Math.max(maxY, bottomEdge + 20); // 20px margin
+      }
+    });
+    
+    return { width: maxX, height: maxY };
+  };
+
+  const canvasSize = calculateCanvasSize();
+
+  console.log('Categories count:', categories.length);
+  console.log('Canvas size:', canvasSize);
+  categories.forEach((category, index) => {
+    const customization = chartCustomization.categories[category.name] || category.customization;
+    console.log(`Category ${index} (${category.name}):`, {
+      position: customization?.position,
+      size: { width: customization?.width, height: customization?.height },
+      companies: category.companies.length
+    });
+  });
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -117,8 +148,13 @@ export default function EcosystemChart() {
         {/* Chart Content with absolute positioning for free movement */}
         <div
           ref={chartRef}
-          className="relative bg-white"
-          style={{ minHeight: '800px', height: '1200px' }}
+          className="relative bg-white overflow-hidden"
+          style={{ 
+            width: canvasSize.width,
+            height: canvasSize.height,
+            minWidth: '1400px',
+            minHeight: '1000px'
+          }}
         >
           {categories.map((category, categoryIndex) => {
             const customization = chartCustomization.categories[category.name] || {
@@ -127,8 +163,8 @@ export default function EcosystemChart() {
               textColor: getContrastColor(category.color),
               size: 'medium' as const,
               position: { 
-                x: (categoryIndex % 3) * 380 + 50, 
-                y: Math.floor(categoryIndex / 3) * 350 + 50 
+                x: 50, 
+                y: 50 
               },
               width: 320,
               height: 288,
