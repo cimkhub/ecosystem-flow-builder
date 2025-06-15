@@ -28,14 +28,18 @@ export default function EcosystemChart() {
           // Fix for gradient text on H1 not rendering in export
           const h1 = clonedDoc.querySelector('h1');
           if (h1) {
-            // Remove classes that create the gradient text effect
-            h1.classList.remove('text-transparent', 'bg-clip-text', 'bg-gradient-to-r', 'from-white', 'via-cyan-100', 'to-purple-200');
-            // Apply a solid, slightly off-white color as a fallback for the export
+            // html2canvas can't render `background-clip: text`.
+            // We'll remove the gradient and set a solid text color.
+            h1.style.backgroundImage = 'none';
             h1.style.color = '#f0f5ff';
+            // We also need to remove properties that make the text invisible.
+            h1.style.webkitBackgroundClip = 'initial';
+            h1.style.backgroundClip = 'initial';
+            h1.classList.remove('text-transparent');
           }
 
           // Fix for animated elements (like categories) not appearing in export
-          const animatedElements = clonedDoc.querySelectorAll('.animate-fade-in');
+          const animatedElements = clonedDoc.querySelectorAll('.animate-fade-in, .animate-pulse, .animate-bounce, .animate-ping');
           animatedElements.forEach(el => {
             const htmlEl = el as HTMLElement;
             // Disable animation and set final state for capture
