@@ -1,3 +1,4 @@
+
 export function colorFromString(str: string): string {
   // Generate a hash from the string
   let hash = 0;
@@ -30,7 +31,8 @@ export function getContrastColor(backgroundColor: string): string {
   const hslMatch = backgroundColor.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
   if (hslMatch) {
     const lightness = parseInt(hslMatch[3]);
-    return lightness > 55 ? '#1f2937' : '#ffffff';
+    // By increasing this threshold, more mid-range colors will get white text
+    return lightness > 60 ? '#1f2937' : '#ffffff';
   }
   return '#1f2937'; // Default to dark text
 }
