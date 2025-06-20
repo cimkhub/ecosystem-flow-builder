@@ -21,7 +21,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   profile: null,
-  loading: true,
+  loading: false,
 
   signIn: async (email: string, password: string) => {
     set({ loading: true })
@@ -217,25 +217,46 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 }))
 
 // Initialize auth state only if supabase is properly configured
-try {
-  console.log('Initializing auth state change listener')
-  supabase.auth.onAuthStateChange(async (event, session) => {
-    console.log('Auth state changed:', event, session?.user?.email)
-    const { setUser, setLoading, fetchProfile } = useAuthStore.getState()
+const initializeAuth = async () => {
+  try {
+    console.log('Initializing auth state change listener')
     
-    setUser(session?.user || null)
-    
-    if (session?.user) {
-      console.log('User logged in, fetching profile')
-      await fetchProfile(session.user.id)
-    } else {
-      console.log('User logged out, clearing profile')
-      useAuthStore.setState({ profile: null })
+    // Check initial session
+    const { data: { session }, error } = await supabase.auth.getSession()
+    if (error) {
+      console.error('Error getting initial session:', error)
+      useAuthStore.setState({ loading: false })
+      return
     }
-    
-    setLoading(false)
-  })
-} catch (error) {
-  console.error('Auth initialization error:', error)
-  useAuthStore.setState({ loading: false })
+
+    if (session?.user) {
+      console.log('Initial session found, setting user')
+      useAuthStore.setState({ user: session.user })
+      await useAuthStore.getState().fetchProfile(session.user.id)
+    }
+
+    // Set up auth state change listener
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.email)
+      const { setUser, setLoading, fetchProfile } = useAuthStore.getState()
+      
+      setUser(session?.user || null)
+      
+      if (session?.user) {
+        console.log('User logged in, fetching profile')
+        await fetchProfile(session.user.id)
+      } else {
+        console.log('User logged out, clearing profile')
+        useAuthStore.setState({ profile: null })
+      }
+      
+      setLoading(false)
+    })
+  } catch (error) {
+    console.error('Auth initialization error:', error)
+    useAuthStore.setState({ loading: false })
+  }
 }
+
+// Initialize auth
+initializeAuth()

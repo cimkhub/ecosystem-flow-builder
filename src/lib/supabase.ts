@@ -12,16 +12,17 @@ const createSupabaseClient = () => {
     // Return a mock client to prevent app crashes during development
     return {
       auth: {
-        signInWithPassword: () => Promise.reject(new Error('Supabase not configured')),
-        signUp: () => Promise.reject(new Error('Supabase not configured')),
-        signInWithOAuth: () => Promise.reject(new Error('Supabase not configured')),
-        signOut: () => Promise.reject(new Error('Supabase not configured')),
+        signInWithPassword: () => Promise.reject(new Error('Supabase not configured. Please set up your environment variables.')),
+        signUp: () => Promise.reject(new Error('Supabase not configured. Please set up your environment variables.')),
+        signInWithOAuth: () => Promise.reject(new Error('Supabase not configured. Please set up your environment variables.')),
+        signOut: () => Promise.reject(new Error('Supabase not configured. Please set up your environment variables.')),
+        getUser: () => Promise.resolve({ data: { user: null }, error: null }),
         onAuthStateChange: () => ({ data: { subscription: null }, error: null }),
       },
       from: () => ({
-        select: () => ({ single: () => Promise.reject(new Error('Supabase not configured')) }),
-        insert: () => Promise.reject(new Error('Supabase not configured')),
-        update: () => ({ eq: () => Promise.reject(new Error('Supabase not configured')) }),
+        select: () => ({ single: () => Promise.reject(new Error('Supabase not configured. Please set up your environment variables.')) }),
+        insert: () => Promise.reject(new Error('Supabase not configured. Please set up your environment variables.')),
+        update: () => ({ eq: () => Promise.reject(new Error('Supabase not configured. Please set up your environment variables.')) }),
       }),
     }
   }
