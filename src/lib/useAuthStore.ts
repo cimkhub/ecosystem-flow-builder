@@ -12,6 +12,7 @@ interface AuthState {
   signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>
+  fetchProfile: (userId: string) => Promise<void>
   setUser: (user: User | null) => void
   setProfile: (profile: UserProfile | null) => void
   setLoading: (loading: boolean) => void
@@ -143,17 +144,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setLoading: (loading) => set({ loading }),
 }))
 
-// Initialize auth state
-supabase.auth.onAuthStateChange((event, session) => {
-  const { setUser, setLoading, fetchProfile } = useAuthStore.getState()
-  
-  setUser(session?.user || null)
-  
-  if (session?.user) {
-    fetchProfile(session.user.id)
-  } else {
-    useAuthStore.setState({ profile: null })
-  }
-  
-  setLoading(false)
-})
+// Initialize auth state only if supabase is properly configured
+try {
+  supabase.auth.onAuthStateChange((event, session) => {
+    const { setUser, setLoading, fetchProfile } = useAuthStore.getState()
+    
+    setUser(session?.user || null)
+    
+    if (session?.user) {
+      fetchProfile(session.user.id)
+    } else {
+      useAuthStore.setState({ profile: null })
+    }
+    
+    setLoading(false)
+  })
+} catch (error) {
+  console.error('Auth initialization error:', error)
+  useAuthStore.setState({ loading: false })
+}

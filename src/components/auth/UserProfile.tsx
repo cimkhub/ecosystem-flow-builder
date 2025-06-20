@@ -1,4 +1,3 @@
-
 import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,7 +9,7 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu'
-import { Avatar, AvatarFallback, AvatarInitials } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { User, LogOut, Settings, Crown, Star } from 'lucide-react'
 import { useAuthStore } from '@/lib/useAuthStore'
 import { UserTier } from '@/lib/supabase'
