@@ -1,14 +1,23 @@
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import LoginForm from './LoginForm'
 import RegisterForm from './RegisterForm'
 import { LogIn } from 'lucide-react'
+import { useAuthStore } from '@/lib/useAuthStore'
 
 export default function AuthDialog() {
   const [isOpen, setIsOpen] = useState(false)
   const [mode, setMode] = useState<'login' | 'register'>('login')
+  const { user } = useAuthStore()
+
+  // Close dialog when user successfully logs in
+  useEffect(() => {
+    if (user) {
+      setIsOpen(false)
+    }
+  }, [user])
 
   const handleSwitchMode = () => {
     setMode(mode === 'login' ? 'register' : 'login')

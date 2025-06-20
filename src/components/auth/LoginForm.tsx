@@ -20,16 +20,27 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!email || !password) {
+      toast({
+        title: "Missing fields",
+        description: "Please enter both email and password.",
+        variant: "destructive",
+      })
+      return
+    }
+
     try {
       await signIn(email, password)
       toast({
         title: "Welcome back!",
         description: "You have successfully signed in.",
       })
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Login error:', error)
       toast({
         title: "Sign in failed",
-        description: "Please check your credentials and try again.",
+        description: error.message || "Please check your credentials and try again.",
         variant: "destructive",
       })
     }
@@ -38,10 +49,15 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
   const handleGoogleSignIn = async () => {
     try {
       await signInWithGoogle()
-    } catch (error) {
+      toast({
+        title: "Redirecting to Google",
+        description: "Please complete the sign in process.",
+      })
+    } catch (error: any) {
+      console.error('Google sign in error:', error)
       toast({
         title: "Google sign in failed",
-        description: "Please try again later.",
+        description: error.message || "Please try again later.",
         variant: "destructive",
       })
     }
@@ -67,6 +83,7 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
                 onChange={(e) => setEmail(e.target.value)}
                 className="pl-10"
                 required
+                disabled={loading}
               />
             </div>
           </div>
@@ -83,6 +100,7 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-10"
                 required
+                disabled={loading}
               />
             </div>
           </div>
@@ -124,6 +142,7 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
             variant="link"
             onClick={onSwitchToRegister}
             className="p-0 h-auto font-semibold"
+            disabled={loading}
           >
             Sign up
           </Button>

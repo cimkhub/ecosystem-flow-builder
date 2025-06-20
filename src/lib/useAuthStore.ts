@@ -26,14 +26,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signIn: async (email: string, password: string) => {
     set({ loading: true })
     try {
+      console.log('Attempting to sign in with email:', email)
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
       
-      if (error) throw error
+      if (error) {
+        console.error('Sign in error:', error)
+        throw error
+      }
       
+      console.log('Sign in successful:', data)
       if (data.user) {
+        set({ user: data.user })
         await get().fetchProfile(data.user.id)
       }
     } catch (error) {
@@ -47,22 +53,39 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signUp: async (email: string, password: string) => {
     set({ loading: true })
     try {
+      console.log('Attempting to sign up with email:', email)
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
       })
       
-      if (error) throw error
+      if (error) {
+        console.error('Sign up error:', error)
+        throw error
+      }
       
+      console.log('Sign up successful:', data)
       if (data.user) {
+        set({ user: data.user })
         // Create user profile with default tier
-        await supabase
-          .from('user_profiles')
-          .insert({
-            id: data.user.id,
-            email: data.user.email,
-            tier: 'free' as UserTier,
-          })
+        try {
+          const { error: profileError } = await supabase
+            .from('user_profiles')
+            .insert({
+              id: data.user.id,
+              email: data.user.email,
+              tier: 'free' as UserTier,
+            })
+          
+          if (profileError) {
+            console.error('Profile creation error:', profileError)
+          } else {
+            console.log('Profile created successfully')
+            await get().fetchProfile(data.user.id)
+          }
+        } catch (profileError) {
+          console.error('Error creating profile:', profileError)
+        }
       }
     } catch (error) {
       console.error('Sign up error:', error)
@@ -75,6 +98,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signInWithGoogle: async () => {
     set({ loading: true })
     try {
+      console.log('Attempting Google sign in')
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -82,7 +106,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         },
       })
       
-      if (error) throw error
+      if (error) {
+        console.error('Google sign in error:', error)
+        throw error
+      }
+      console.log('Google sign in initiated')
     } catch (error) {
       console.error('Google sign in error:', error)
       throw error
@@ -94,8 +122,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: async () => {
     set({ loading: true })
     try {
+      console.log('Signing out')
       const { error } = await supabase.auth.signOut()
-      if (error) throw error
+      if (error) {
+        console.error('Sign out error:', error)
+        throw error
+      }
+      console.log('Sign out successful')
       set({ user: null, profile: null })
     } catch (error) {
       console.error('Sign out error:', error)
@@ -110,13 +143,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!user || !profile) return
 
     try {
+      console.log('Updating profile:', updates)
       const { error } = await supabase
         .from('user_profiles')
         .update(updates)
         .eq('id', user.id)
 
-      if (error) throw error
+      if (error) {
+        console.error('Update profile error:', error)
+        throw error
+      }
       
+      console.log('Profile updated successfully')
       set({ profile: { ...profile, ...updates } })
     } catch (error) {
       console.error('Update profile error:', error)
@@ -126,13 +164,47 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   fetchProfile: async (userId: string) => {
     try {
+      console.log('Fetching profile for user:', userId)
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('id', userId)
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('Fetch profile error:', error)
+        // If profile doesn't exist, create a default one
+        if (error.code === 'PGRST116') {
+          console.log('Profile not found, creating default profile')
+          const { data: userData } = await supabase.auth.getUser()
+          if (userData.user) {
+            const { error: insertError } = await supabase
+              .from('user_profiles')
+              .insert({
+                id: userId,
+                email: userData.user.email,
+                tier: 'free' as UserTier,
+              })
+            
+            if (!insertError) {
+              // Fetch the newly created profile
+              const { data: newProfile } = await supabase
+                .from('user_profiles')
+                .select('*')
+                .eq('id', userId)
+                .single()
+              
+              if (newProfile) {
+                set({ profile: newProfile })
+                console.log('Default profile created and fetched')
+              }
+            }
+          }
+        }
+        return
+      }
+      
+      console.log('Profile fetched successfully:', data)
       set({ profile: data })
     } catch (error) {
       console.error('Fetch profile error:', error)
@@ -146,14 +218,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
 // Initialize auth state only if supabase is properly configured
 try {
-  supabase.auth.onAuthStateChange((event, session) => {
+  console.log('Initializing auth state change listener')
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    console.log('Auth state changed:', event, session?.user?.email)
     const { setUser, setLoading, fetchProfile } = useAuthStore.getState()
     
     setUser(session?.user || null)
     
     if (session?.user) {
-      fetchProfile(session.user.id)
+      console.log('User logged in, fetching profile')
+      await fetchProfile(session.user.id)
     } else {
+      console.log('User logged out, clearing profile')
       useAuthStore.setState({ profile: null })
     }
     

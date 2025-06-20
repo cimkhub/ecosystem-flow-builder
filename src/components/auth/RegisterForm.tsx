@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { Mail, Lock, Chrome, Loader2, User } from 'lucide-react'
+import { Mail, Lock, Chrome, Loader2 } from 'lucide-react'
 import { useAuthStore } from '@/lib/useAuthStore'
 import { toast } from '@/hooks/use-toast'
 
@@ -21,6 +21,15 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!email || !password || !confirmPassword) {
+      toast({
+        title: "Missing fields",
+        description: "Please fill in all fields.",
+        variant: "destructive",
+      })
+      return
+    }
     
     if (password !== confirmPassword) {
       toast({
@@ -44,12 +53,13 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
       await signUp(email, password)
       toast({
         title: "Account created!",
-        description: "Please check your email to verify your account.",
+        description: "Your account has been created successfully.",
       })
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Registration error:', error)
       toast({
         title: "Registration failed",
-        description: "Please try again or use a different email.",
+        description: error.message || "Please try again or use a different email.",
         variant: "destructive",
       })
     }
@@ -58,10 +68,15 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
   const handleGoogleSignIn = async () => {
     try {
       await signInWithGoogle()
-    } catch (error) {
+      toast({
+        title: "Redirecting to Google",
+        description: "Please complete the sign in process.",
+      })
+    } catch (error: any) {
+      console.error('Google sign in error:', error)
       toast({
         title: "Google sign in failed",
-        description: "Please try again later.",
+        description: error.message || "Please try again later.",
         variant: "destructive",
       })
     }
@@ -87,6 +102,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
                 onChange={(e) => setEmail(e.target.value)}
                 className="pl-10"
                 required
+                disabled={loading}
               />
             </div>
           </div>
@@ -103,6 +119,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-10"
                 required
+                disabled={loading}
               />
             </div>
           </div>
@@ -119,6 +136,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="pl-10"
                 required
+                disabled={loading}
               />
             </div>
           </div>
@@ -160,6 +178,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
             variant="link"
             onClick={onSwitchToLogin}
             className="p-0 h-auto font-semibold"
+            disabled={loading}
           >
             Sign in
           </Button>
