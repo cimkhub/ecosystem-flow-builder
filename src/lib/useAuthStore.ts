@@ -1,4 +1,3 @@
-
 import { create } from 'zustand'
 import { User } from '@supabase/supabase-js'
 import { supabase, UserProfile, UserTier } from './supabase'
@@ -34,7 +33,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       
       if (error) {
         console.error('Sign in error:', error)
-        throw error
+        throw new Error(error.message)
       }
       
       console.log('Sign in successful:', data)
@@ -61,13 +60,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       
       if (error) {
         console.error('Sign up error:', error)
-        throw error
+        throw new Error(error.message)
       }
       
-      console.log('Sign up successful:', data)
+      console.log('Sign up response:', data)
       if (data.user) {
         set({ user: data.user })
-        // Create user profile with default tier
+        // Try to create user profile with default tier
         try {
           const { error: profileError } = await supabase
             .from('user_profiles')
@@ -99,7 +98,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ loading: true })
     try {
       console.log('Attempting Google sign in')
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: window.location.origin,
@@ -108,9 +107,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       
       if (error) {
         console.error('Google sign in error:', error)
-        throw error
+        throw new Error(error.message)
       }
-      console.log('Google sign in initiated')
+      
+      console.log('Google sign in initiated:', data)
     } catch (error) {
       console.error('Google sign in error:', error)
       throw error
@@ -216,7 +216,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setLoading: (loading) => set({ loading }),
 }))
 
-// Initialize auth state only if supabase is properly configured
+// Initialize auth state
 const initializeAuth = async () => {
   try {
     console.log('Initializing auth state change listener')
@@ -225,7 +225,6 @@ const initializeAuth = async () => {
     const { data: { session }, error } = await supabase.auth.getSession()
     if (error) {
       console.error('Error getting initial session:', error)
-      useAuthStore.setState({ loading: false })
       return
     }
 
@@ -236,9 +235,9 @@ const initializeAuth = async () => {
     }
 
     // Set up auth state change listener
-    supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event, session?.user?.email)
-      const { setUser, setLoading, fetchProfile } = useAuthStore.getState()
+      const { setUser, fetchProfile } = useAuthStore.getState()
       
       setUser(session?.user || null)
       
@@ -249,12 +248,11 @@ const initializeAuth = async () => {
         console.log('User logged out, clearing profile')
         useAuthStore.setState({ profile: null })
       }
-      
-      setLoading(false)
     })
+
+    console.log('Auth listener setup complete')
   } catch (error) {
     console.error('Auth initialization error:', error)
-    useAuthStore.setState({ loading: false })
   }
 }
 

@@ -7,22 +7,60 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 // Create a mock client if environment variables are missing (for development)
 const createSupabaseClient = () => {
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn('Supabase environment variables are missing. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your environment.')
+    console.warn('Supabase environment variables are missing. Using mock client for development.')
     
-    // Return a mock client to prevent app crashes during development
+    // Return a mock client that simulates success responses to prevent loading state issues
     return {
       auth: {
-        signInWithPassword: () => Promise.reject(new Error('Supabase not configured. Please set up your environment variables.')),
-        signUp: () => Promise.reject(new Error('Supabase not configured. Please set up your environment variables.')),
-        signInWithOAuth: () => Promise.reject(new Error('Supabase not configured. Please set up your environment variables.')),
-        signOut: () => Promise.reject(new Error('Supabase not configured. Please set up your environment variables.')),
-        getUser: () => Promise.resolve({ data: { user: null }, error: null }),
-        onAuthStateChange: () => ({ data: { subscription: null }, error: null }),
+        signInWithPassword: async () => {
+          console.log('Mock sign in - would normally require Supabase configuration')
+          return { 
+            data: { user: null, session: null }, 
+            error: { message: 'Please configure Supabase to enable authentication' }
+          }
+        },
+        signUp: async () => {
+          console.log('Mock sign up - would normally require Supabase configuration')
+          return { 
+            data: { user: null, session: null }, 
+            error: { message: 'Please configure Supabase to enable authentication' }
+          }
+        },
+        signInWithOAuth: async () => {
+          console.log('Mock OAuth - would normally require Supabase configuration')
+          return { 
+            data: { url: null, provider: null }, 
+            error: { message: 'Please configure Supabase to enable authentication' }
+          }
+        },
+        signOut: async () => {
+          console.log('Mock sign out')
+          return { error: null }
+        },
+        getUser: async () => ({ data: { user: null }, error: null }),
+        getSession: async () => ({ data: { session: null }, error: null }),
+        onAuthStateChange: (callback: any) => {
+          console.log('Mock auth state change listener')
+          return { data: { subscription: { unsubscribe: () => {} } }, error: null }
+        },
       },
       from: () => ({
-        select: () => ({ single: () => Promise.reject(new Error('Supabase not configured. Please set up your environment variables.')) }),
-        insert: () => Promise.reject(new Error('Supabase not configured. Please set up your environment variables.')),
-        update: () => ({ eq: () => Promise.reject(new Error('Supabase not configured. Please set up your environment variables.')) }),
+        select: () => ({ 
+          single: async () => ({ 
+            data: null, 
+            error: { message: 'Please configure Supabase to enable database operations' }
+          })
+        }),
+        insert: async () => ({ 
+          data: null, 
+          error: { message: 'Please configure Supabase to enable database operations' }
+        }),
+        update: () => ({ 
+          eq: async () => ({ 
+            data: null, 
+            error: { message: 'Please configure Supabase to enable database operations' }
+          })
+        }),
       }),
     }
   }
