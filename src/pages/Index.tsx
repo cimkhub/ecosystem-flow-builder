@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -5,11 +6,15 @@ import { Building2, Upload, Image, Sparkles, Zap, TrendingUp } from 'lucide-reac
 import FileUploader from '../components/FileUploader';
 import LogoUploader from '../components/LogoUploader';
 import EcosystemChart from '../components/EcosystemChart';
+import AuthDialog from '../components/auth/AuthDialog';
+import UserProfile from '../components/auth/UserProfile';
 import { useEcosystemStore } from '../lib/useEcosystemStore';
+import { useAuthStore } from '../lib/useAuthStore';
 
 export default function Index() {
   const [activeTab, setActiveTab] = useState<'data' | 'logos' | 'chart'>('data');
   const { companies, categories, showColumnMapper } = useEcosystemStore();
+  const { user } = useAuthStore();
 
   const handleMappingComplete = () => {
     setActiveTab('logos');
@@ -52,6 +57,11 @@ export default function Index() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-gradient-to-b from-blue-500/20 to-transparent rounded-full blur-3xl" />
         
         <div className="relative container mx-auto px-4 py-16">
+          {/* Auth Section */}
+          <div className="absolute top-4 right-4 z-10">
+            {user ? <UserProfile /> : <AuthDialog />}
+          </div>
+
           <div className="text-center max-w-4xl mx-auto">
             <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4 animate-fade-in">
               <Sparkles className="h-6 w-6 text-blue-600" />
